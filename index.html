@@ -233,7 +233,6 @@
         <div class="absen-jenis-chip" id="chipJenis5"></div>
         <p class="info-text" id="selfieInfoText">Ambil foto selfie</p>
         <video id="camera-view" autoplay playsinline></video>
-        <div class="camera-flash" id="cameraFlash"></div>
         <canvas id="canvas" style="display:none;"></canvas>
         <img id="captured-photo" style="display:none;">
         <button class="btn" id="captureBtn" onclick="capturePhoto()">📸 Ambil Foto</button>
@@ -394,7 +393,7 @@
 
     <div class="card" id="hrCardBulanan">
       <div class="card-title">🗓️ Rekap Bulanan
-        <span class="muted"><button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToKaryawan()">🔑 Kelola PIN</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToPayroll()">💰 Payroll</button></span>
+        <span class="muted"><button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToKaryawan()">🔑 Kelola PIN</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToPayroll()">💰 Payroll</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrHitungUlangSemuaSkor(this)">🔄 Hitung Ulang Skor</button></span>
       </div>
       <div class="hr-filter-row">
         <select id="hrFilterBulan"></select>
@@ -411,10 +410,6 @@
       <div id="hrListErrorBox"></div>
       <div id="hrEmpList" style="margin-top:6px"></div>
     </div>
-
-    <button class="hr-fab-wa" id="hrFabWa" onclick="hrOpenLaporanWA()" title="Kirim laporan absensi ke WhatsApp">
-      <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm5.8 14.14c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.11.11-1.79-.11a16.4 16.4 0 01-1.6-.59c-2.82-1.22-4.66-4.06-4.8-4.25-.14-.19-1.15-1.53-1.15-2.92 0-1.39.73-2.07.99-2.36.26-.28.57-.35.76-.35.19 0 .38 0 .55.01.18.01.42-.07.65.5.24.58.81 2 .88 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.37-.43.5-.14.14-.29.29-.13.57.17.29.75 1.24 1.61 2 1.11.99 2.04 1.3 2.33 1.44.29.15.46.13.63-.07.17-.2.72-.83.91-1.12.19-.29.38-.24.63-.14.26.1 1.65.78 1.94.92.29.14.48.21.55.33.07.12.07.68-.17 1.35z"/></svg>
-    </button>
   </div>
 
   <!-- DETAIL KARYAWAN -->
@@ -440,6 +435,7 @@
     <div class="hr-top-bar">
       <div class="hr-back-btn" onclick="hrBackToHomeFromReport()">←</div>
       <h1>Laporan ke WA</h1>
+      <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToEditTemplate()">⚙️ Edit Template</button>
     </div>
     <div class="card">
       <div class="card-title">📋 Preview Laporan <span class="muted">Bisa diedit dulu</span></div>
@@ -449,6 +445,36 @@
         <button class="btn" onclick="hrKirimKeWA()">Kirim ke WhatsApp</button>
       </div>
       <div class="hr-copy-toast" id="hrCopyToast"></div>
+    </div>
+  </div>
+
+  <!-- EDIT TEMPLATE LAPORAN WA -->
+  <div class="page" id="page-hr-template">
+    <div class="hr-top-bar">
+      <div class="hr-back-btn" onclick="hrGoPage('report')">←</div>
+      <h1>Edit Template</h1>
+    </div>
+    <p class="info-text" style="margin-top:-8px; margin-bottom:14px; text-align:left">
+      Ini template dasar yang dipakai tiap kali buka "Laporan ke WA". Pakai placeholder di bawah ini, nanti otomatis diganti data beneran pas laporan dibikin:
+    </p>
+    <div class="card" style="margin-bottom:14px">
+      <div class="hr-template-placeholder-list">
+        <code>{{GREETING}}</code> <code>{{TANGGAL}}</code><br>
+        <code>{{TIDAK_MASUK_COUNT}}</code> <code>{{TIDAK_MASUK_LIST}}</code><br>
+        <code>{{TERLAMBAT_COUNT}}</code> <code>{{TERLAMBAT_LIST}}</code><br>
+        <code>{{DINAS_COUNT}}</code> <code>{{DINAS_LIST}}</code><br>
+        <code>{{IJIN_COUNT}}</code> <code>{{IJIN_LIST}}</code>
+      </div>
+    </div>
+    <div class="card">
+      <div id="hrTemplateLoadingBox" class="loading-text"><span class="spinner-inline"></span>Memuat data...</div>
+      <div id="hrTemplateErrorBox"></div>
+      <textarea class="hr-report-textarea" id="hrTemplateText" style="display:none; min-height:220px"></textarea>
+      <div class="hr-report-actions" id="hrTemplateActions" style="display:none">
+        <button class="btn btn-secondary" onclick="hrKembalikanTemplateDefault()">Pakai Default</button>
+        <button class="btn" onclick="hrSimpanTemplate()">Simpan</button>
+      </div>
+      <div class="hr-copy-toast" id="hrTemplateStatus"></div>
     </div>
   </div>
 
@@ -537,6 +563,20 @@
   </div>
 
 </div>
+
+<!-- FAB "Laporan ke WA" — sengaja di LUAR semua .page (bukan nested di
+     page-hr-home) supaya position:fixed-nya gak kena rusak oleh animasi
+     transform di .page.active. Tampil/sembunyinya diatur CSS :has(),
+     lihat style.css. -->
+<!-- Kilatan kamera (dipicu JS di capturePhoto()) — sama kayak FAB WA di atas,
+     sengaja di LUAR .page (bukan nested di page-absen) supaya position:fixed-nya
+     gak kena rusak oleh animasi transform di .page.active. Defaultnya invisible
+     (opacity:0), jadi gak perlu diatur tampil/sembunyi kayak FAB. -->
+<div class="camera-flash" id="cameraFlash"></div>
+
+<button class="hr-fab-wa" id="hrFabWa" onclick="hrOpenLaporanWA()" title="Kirim laporan absensi ke WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm5.8 14.14c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.11.11-1.79-.11a16.4 16.4 0 01-1.6-.59c-2.82-1.22-4.66-4.06-4.8-4.25-.14-.19-1.15-1.53-1.15-2.92 0-1.39.73-2.07.99-2.36.26-.28.57-.35.76-.35.19 0 .38 0 .55.01.18.01.42-.07.65.5.24.58.81 2 .88 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.37-.43.5-.14.14-.29.29-.13.57.17.29.75 1.24 1.61 2 1.11.99 2.04 1.3 2.33 1.44.29.15.46.13.63-.07.17-.2.72-.83.91-1.12.19-.29.38-.24.63-.14.26.1 1.65.78 1.94.92.29.14.48.21.55.33.07.12.07.68-.17 1.35z"/></svg>
+</button>
 
 </div><!-- /.app-shell -->
 

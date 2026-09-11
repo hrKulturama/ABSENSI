@@ -479,10 +479,14 @@
   .riwayat-item-hint { font-size: 11px; color: var(--mint-deep); margin-top: 4px; font-weight: 700; }
 
   .hr-fab-wa {
+    display: none; /* dimunculin lewat :has() di bawah, cuma pas page-hr-home aktif */
     position: fixed; bottom: calc(var(--nav-h) + 32px); right: 20px; width: 56px; height: 56px;
-    border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: #25D366; align-items: center; justify-content: center;
     box-shadow: 0 6px 18px rgba(0,0,0,0.25); cursor: pointer; z-index: 99; border: none;
   }
+  /* Ganti "display" jadi "flex" (bukan cuma toggle none/block) supaya ikon SVG di
+     dalamnya tetap ke-center kayak sebelumnya (align-items/justify-content butuh flex). */
+  body:has(#page-hr-home.active) .hr-fab-wa { display: flex; }
   .hr-fab-wa:active { transform: scale(0.94); }
   .hr-fab-wa svg { width: 26px; height: 26px; fill: #fff; }
 
@@ -630,3 +634,8 @@
   .hr-payroll-row span:last-child { color: var(--ink); font-weight: 700; text-align: right; }
   .hr-payroll-row.total-row { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px; }
   .hr-payroll-row.total-row span:last-child { color: var(--mint-deep); font-family: var(--font-display); font-size: 14px; }
+  .hr-template-placeholder-list { font-size: 12px; line-height: 2.1; }
+  .hr-template-placeholder-list code {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 6px; font-family: 'SF Mono', Consolas, Menlo, monospace; font-size: 11px; color: var(--mint-deep);
+  }

@@ -2119,6 +2119,50 @@ function hrRenderKaryawanList() {
   }).join('');
 }
 
+async function hrHitungUlangSemuaSkor(btnEl) {
+  const now = new Date();
+  const konfirmasi = confirm(
+    'Hitung ulang skor SEMUA karyawan buat bulan ' + HR_BULAN_NAMES[now.getMonth()] + ' ' + now.getFullYear() + '?\n\n' +
+    'Ini bakal nimpa semua angka yang sekarang ada di sheet SKOR bulan ini, dihitung ulang pakai formula skor yang aktif SEKARANG. ' +
+    'Biasanya dipakai abis formula skor diubah, biar semua orang langsung ke-update serentak.'
+  );
+  if (!konfirmasi) return;
+
+  const teksAsli = btnEl.textContent;
+  btnEl.disabled = true;
+  btnEl.textContent = 'Menghitung...';
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'hitungUlangSemuaSkor', token: tokenHR() })
+    });
+    const data = await res.json();
+
+    if (data.result !== 'success') {
+      if (data.code === 'UNAUTHORIZED' || data.message === 'Unauthorized') {
+        alert('Sesi HR habis, silakan masuk Mode HR lagi.');
+      } else {
+        alert('Gagal: ' + (data.message || 'Error tidak diketahui'));
+      }
+      return;
+    }
+
+    // Leaderboard & Home rank di HP siapa pun yang lagi buka bisa aja masih
+    // nyimpen cache lama — paksa refresh biar gak nampilin angka yang baru
+    // aja ditimpa server.
+    leaderboardCache = null;
+
+    alert('Selesai! ' + data.jumlahKaryawan + ' karyawan sudah dihitung ulang buat bulan ' + data.bulan + '/' + data.tahun + '.');
+  } catch (e) {
+    alert('Gagal koneksi ke server.');
+  } finally {
+    btnEl.disabled = false;
+    btnEl.textContent = teksAsli;
+  }
+}
+
 async function hrResetPinKaryawan(nama) {
   const konfirmasi = confirm(
     'Reset PIN "' + nama + '"?\n\n' +
@@ -2232,7 +2276,25 @@ function hrGreetingNow() {
   return 'Sore';
 }
 
-function hrBuildLaporanText() {
+// Cache template di sesi ini biar gak fetch ulang tiap buka Laporan WA —
+// di-reset (null) begitu HR nyimpen template baru dari halaman edit.
+let hrLaporanTemplateCache = null;
+
+async function hrAmbilLaporanTemplate() {
+  if (hrLaporanTemplateCache) return hrLaporanTemplateCache;
+  try {
+    const url = SCRIPT_URL + '?action=getLaporanTemplate&token=' + encodeURIComponent(tokenHR());
+    const res = await fetch(url, { redirect: 'follow' });
+    const data = await res.json();
+    if (data.result === 'success') {
+      hrLaporanTemplateCache = data.template;
+      return data.template;
+    }
+  } catch (e) { /* fallback ke default kalau gagal fetch */ }
+  return null; // null -> pemanggil pakai fallback default-nya sendiri
+}
+
+async function hrBuildLaporanText() {
   const now = new Date();
   const tanggalLabel = now.getDate() + ' ' + HR_BULAN_NAMES[now.getMonth()] + ' ' + now.getFullYear();
 
@@ -2274,36 +2336,143 @@ function hrBuildLaporanText() {
 
   const fmt = (arr) => arr.map(n => '- ' + n).join('\n');
 
-  let text = 'Selamat ' + hrGreetingNow() + ',\n';
-  text += 'Berikut report absensi tanggal ' + tanggalLabel + ':\n';
+  // Template default (dipakai kalau belum pernah di-custom / gagal fetch)
+  // sengaja SAMA PERSIS format-nya kayak versi hardcode sebelumnya, biar
+  // gak ada yang berubah buat HR yang belum pernah sentuh halaman edit.
+  const templateDefault =
+    'Selamat {{GREETING}},\n' +
+    'Berikut report absensi tanggal {{TANGGAL}}:\n' +
+    '1. Tidak masuk kerja ({{TIDAK_MASUK_COUNT}} orang)\n' +
+    '{{TIDAK_MASUK_LIST}}\n' +
+    '2. Datang terlambat ({{TERLAMBAT_COUNT}} orang)\n' +
+    '{{TERLAMBAT_LIST}}\n' +
+    '3. Dinas luar / WFH ({{DINAS_COUNT}} orang)\n' +
+    '{{DINAS_LIST}}\n' +
+    '4. Libur ganti hari Minggu (0 orang)\n' +
+    '[isi manual jika ada]\n' +
+    '5. Ijin Per jam ({{IJIN_COUNT}} orang)\n' +
+    '{{IJIN_LIST}}';
 
-  text += '1. Tidak masuk kerja (' + tidakMasuk.length + ' orang)\n';
-  if (tidakMasuk.length) text += fmt(tidakMasuk) + '\n';
+  const template = (await hrAmbilLaporanTemplate()) || templateDefault;
 
-  text += '2. Datang terlambat (' + terlambat.length + ' orang)\n';
-  if (terlambat.length) text += fmt(terlambat) + '\n';
+  const nilai = {
+    '{{GREETING}}': hrGreetingNow(),
+    '{{TANGGAL}}': tanggalLabel,
+    '{{TIDAK_MASUK_COUNT}}': String(tidakMasuk.length),
+    '{{TIDAK_MASUK_LIST}}': fmt(tidakMasuk),
+    '{{TERLAMBAT_COUNT}}': String(terlambat.length),
+    '{{TERLAMBAT_LIST}}': fmt(terlambat),
+    '{{DINAS_COUNT}}': String(dinas.length),
+    '{{DINAS_LIST}}': fmt(dinas),
+    '{{IJIN_COUNT}}': String(ijin.length),
+    '{{IJIN_LIST}}': fmt(ijin)
+  };
 
-  text += '3. Dinas luar / WFH (' + dinas.length + ' orang)\n';
-  if (dinas.length) text += fmt(dinas) + '\n';
+  let text = template;
+  Object.keys(nilai).forEach(placeholder => {
+    text = text.split(placeholder).join(nilai[placeholder]);
+  });
 
-  // Tidak ada di data sistem — diisi manual oleh HR
-  text += '4. Libur ganti hari Minggu (0 orang)\n';
-  text += '[isi manual jika ada]\n';
-
-  text += '5. Ijin Per jam (' + ijin.length + ' orang)\n';
-  if (ijin.length) text += fmt(ijin);
-
-  return text.trim();
+  // Di template default, TIDAK ADA baris yang sengaja kosong — semua baris
+  // isinya teks atau placeholder. Jadi kalau ada baris yang habis substitusi
+  // jadi kosong (list kategori 0 orang), itu artefak, bukan spasi yang
+  // disengaja — dibuang biar hasilnya identik sama versi lama (yang emang
+  // gak nulis baris apa pun kalau daftarnya kosong).
+  return text.split('\n').filter(line => line.trim() !== '').join('\n').trim();
 }
 
-function hrOpenLaporanWA() {
-  const text = hrBuildLaporanText();
+async function hrOpenLaporanWA() {
+  const text = await hrBuildLaporanText();
   document.getElementById('hrLaporanText').value = text;
   document.getElementById('hrCopyToast').textContent = '';
   hrGoPage('report');
 }
 
 function hrBackToHomeFromReport() { hrGoPage('home'); }
+
+// ===== EDIT TEMPLATE LAPORAN WA =====
+function hrGoToEditTemplate() {
+  hrGoPage('template');
+  hrLoadTemplateEditor();
+}
+
+async function hrLoadTemplateEditor() {
+  const loading = document.getElementById('hrTemplateLoadingBox');
+  const errBox = document.getElementById('hrTemplateErrorBox');
+  const textarea = document.getElementById('hrTemplateText');
+  const actions = document.getElementById('hrTemplateActions');
+  loading.style.display = 'block';
+  errBox.innerHTML = '';
+  textarea.style.display = 'none';
+  actions.style.display = 'none';
+  document.getElementById('hrTemplateStatus').textContent = '';
+
+  try {
+    const url = SCRIPT_URL + '?action=getLaporanTemplate&token=' + encodeURIComponent(tokenHR());
+    const res = await fetch(url, { redirect: 'follow' });
+    const data = await res.json();
+    loading.style.display = 'none';
+
+    if (data.result !== 'success') {
+      if (data.code === 'UNAUTHORIZED' || data.message === 'Unauthorized') {
+        errBox.innerHTML = '<div class="status-box status-fail">⚠️ Sesi HR habis, masuk Mode HR lagi.</div>';
+      } else {
+        errBox.innerHTML = '<div class="status-box status-fail">⚠️ ' + escapeHtml(data.message || 'Gagal memuat template.') + '</div>';
+      }
+      return;
+    }
+
+    hrTemplateDefaultCache = data.templateDefault;
+    textarea.value = data.template;
+    textarea.style.display = 'block';
+    actions.style.display = 'flex';
+  } catch (e) {
+    loading.style.display = 'none';
+    errBox.innerHTML = '<div class="status-box status-fail">⚠️ Gagal koneksi ke server.</div>';
+  }
+}
+
+let hrTemplateDefaultCache = null;
+
+function hrKembalikanTemplateDefault() {
+  if (!hrTemplateDefaultCache) return;
+  if (!confirm('Isi kotak teks dengan template default? Perubahan ini belum tersimpan sampai kamu klik "Simpan".')) return;
+  document.getElementById('hrTemplateText').value = hrTemplateDefaultCache;
+}
+
+async function hrSimpanTemplate() {
+  const template = document.getElementById('hrTemplateText').value;
+  const statusBox = document.getElementById('hrTemplateStatus');
+
+  if (!template.trim()) {
+    statusBox.innerHTML = '<div class="status-box status-fail">⚠️ Template gak boleh kosong.</div>';
+    return;
+  }
+
+  statusBox.innerHTML = '<span class="spinner-inline"></span>Menyimpan...';
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'simpanLaporanTemplate', token: tokenHR(), template })
+    });
+    const data = await res.json();
+
+    if (data.result !== 'success') {
+      statusBox.innerHTML = '<div class="status-box status-fail">⚠️ ' + escapeHtml(data.message || 'Gagal menyimpan.') + '</div>';
+      return;
+    }
+
+    // Cache template di sesi Laporan WA sekarang basi, paksa fetch ulang
+    // lain kali "Laporan ke WA" dibuka biar langsung kepake yang baru.
+    hrLaporanTemplateCache = null;
+
+    statusBox.innerHTML = '<div class="status-box status-ok">✅ Tersimpan</div>';
+  } catch (e) {
+    statusBox.innerHTML = '<div class="status-box status-fail">⚠️ Gagal koneksi ke server.</div>';
+  }
+}
 
 function hrSalinLaporan() {
   const ta = document.getElementById('hrLaporanText');
