@@ -1279,8 +1279,9 @@ function showLoadingError(msg) {
 // ===== SISTEM POIN KEHADIRAN (dipakai buat Leaderboard) =====
 
 // Absen Masuk / check-in Dinas Lapangan: makin pagi makin gede bonusnya
-// <08:00 -> 100 + 1 poin/menit lebih awal, BONUS DICAP MAKSIMAL 100 (jadi total max 200),
-//           dicapai di jam 06:20 (100 menit lebih awal) — lebih pagi dari itu, poinnya tetep 200
+// <08:00 -> 100 + 1 poin per 5 menit lebih awal, BONUS DICAP MAKSIMAL 50 (jadi total max 150),
+//           dicapai di 250 menit lebih awal (~03:50) — praktis gak pernah kesentuh di dunia nyata,
+//           jadi efeknya bonus ini landai terus seiring makin pagi, gak mentok cepet kayak sebelumnya
 // 08:00-08:05 -> turun linear 100 -> 95
 // 08:05-09:00 -> turun linear 95 -> 0
 // >=09:00 -> 0
@@ -1291,8 +1292,9 @@ function scoreAbsenMasuk(jam, menit) {
   const lateHard = 9 * 60;        // 09:00
 
   if (t < startWork) {
-    const earlyMinutes = Math.min(startWork - t, 100); // bonus dicap di 100 menit lebih awal (06:20)
-    return 100 + earlyMinutes; // maksimal 200
+    const earlyMinutes = startWork - t;
+    const bonus = Math.min(Math.floor(earlyMinutes / 5), 50); // 1 poin tiap 5 menit, dicap di 50
+    return 100 + bonus; // maksimal 150
   }
   if (t <= lateSoft) {
     const ratio = (t - startWork) / (lateSoft - startWork);
