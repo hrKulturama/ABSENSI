@@ -1,6 +1,6 @@
 // Service worker untuk Absensi Karyawan PWA
 // Naikkan versi ini (v1 -> v2 -> ...) tiap kali update index.html biar cache lama dibuang otomatis
-const CACHE_NAME = 'absensi-cache-v44';
+const CACHE_NAME = 'absensi-cache-v45';
 
 const APP_SHELL = [
   './',
