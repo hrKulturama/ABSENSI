@@ -1,6 +1,13 @@
 // URL dasar Apps Script (TANPA query string di sini, query ditambahkan saat fetch)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDjfUyqGAaSfJxBHZ2ULgXyttVSgTJFBt9D8KF6m-wvbcNEzEbol9DbtzzPoxMXP79/exec';
 
+// Backend baru (Vercel + Sheets API langsung, skip lapisan eksekusi Apps
+// Script). TAHAP 2 migrasi: baru getKaryawan/getProfil/getAbsensi/getLeaderboard
+// yang dialihkan ke sini (udah diverifikasi paralel identik dengan Apps
+// Script) — endpoint lain (submit absensi, login, payroll, dll) TETAP di
+// SCRIPT_URL sampai tahap migrasinya masing-masing selesai & diverifikasi.
+const VERCEL_BACKEND_URL = 'https://absensi-backend-ruby.vercel.app/api';
+
 // Kode QR resmi kantor. HARUS sama persis dengan VALID_QR_CODE di Code.gs,
 // dipakai untuk validasi instan di HP begitu QR selesai discan (sebelum lanjut ke step lokasi/foto).
 const VALID_QR_CODE = 'MABES-SHOEPOLICE';
@@ -358,7 +365,7 @@ let daftarNamaCache = null;
 async function muatDaftarNama() {
   const sel = document.getElementById('gateNamaSelect');
   try {
-    const res = await fetch(SCRIPT_URL + '?action=getKaryawan');
+    const res = await fetch(VERCEL_BACKEND_URL + '/getKaryawan');
     const data = await res.json();
     if (data.result !== 'success') throw new Error(data.message);
 
@@ -1229,7 +1236,7 @@ async function fetchAbsensi(nama, month, year) {
   absensiFetchPromise = (async () => {
     try {
       // nama TIDAK dikirim lagi — server ambil dari token, jadi gak bisa ngintip riwayat orang lain
-      const url = SCRIPT_URL + '?action=getAbsensi&token=' + encodeURIComponent(getToken()) + '&month=' + month + '&year=' + year;
+      const url = VERCEL_BACKEND_URL + '/getAbsensi?token=' + encodeURIComponent(getToken()) + '&month=' + month + '&year=' + year;
       console.log('[fetchAbsensi] URL:', url);
 
       const res = await fetch(url, { redirect: 'follow' });
@@ -1439,7 +1446,7 @@ async function fetchLeaderboard() {
       const now = new Date();
       // Kirim bulan-tahun eksplisit — server sekarang cuma balikin data bulan ini
       // (bukan seluruh histori lagi), jadi makin cepat makin lama app ini jalan.
-      const url = SCRIPT_URL + '?action=getLeaderboard&month=' + (now.getMonth() + 1) + '&year=' + now.getFullYear() + '&token=' + encodeURIComponent(getToken());
+      const url = VERCEL_BACKEND_URL + '/getLeaderboard?month=' + (now.getMonth() + 1) + '&year=' + now.getFullYear() + '&token=' + encodeURIComponent(getToken());
       const res = await fetch(url, { redirect: 'follow' });
       const rawText = await res.text();
 

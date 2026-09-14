@@ -187,6 +187,11 @@
 // GANTI kalau URL Apps Script Absensi berubah.
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDjfUyqGAaSfJxBHZ2ULgXyttVSgTJFBt9D8KF6m-wvbcNEzEbol9DbtzzPoxMXP79/exec';
 
+// Backend baru (Vercel) — getProfil sudah dipindah ke sini (TAHAP 2 migrasi,
+// sudah diverifikasi paralel identik dengan Apps Script). Lihat app.js buat
+// keterangan lengkap.
+const VERCEL_BACKEND_URL = 'https://absensi-backend-ruby.vercel.app/api';
+
 // URL Apps Script Dashboard Kulturama (Code_Kreatif.gs) — dipakai buat
 // ambil data report. Ini project yang SAMA dipakai REPORT-KREATIF-index.html.
 // Kalau sudah punya nilainya di sana, salin persis ke sini.
@@ -331,7 +336,7 @@ async function periksaAkses() {
   if (!token) { tampilkanLayar('screenSesi'); return; }
 
   try {
-    const res = await fetch(SCRIPT_URL + '?action=getProfil&token=' + encodeURIComponent(token));
+    const res = await fetch(VERCEL_BACKEND_URL + '/getProfil?token=' + encodeURIComponent(token));
     const data = await res.json();
 
     if (data.code === 'UNAUTHORIZED' || data.result !== 'success') {
