@@ -955,7 +955,12 @@ function submitAbsensi() {
   if (isSakit) document.getElementById('locationResultBox').innerHTML += '<div class="status-box status-ok" style="margin-top:8px">Mengirim data...</div>';
   // Identitas dikirim lewat token, BUKAN lewat nama. Server yang menentukan
   // absen ini tercatat atas nama siapa — jadi absen gak bisa dititipin.
-  fetch(SCRIPT_URL, {
+  //
+  // TAHAP 3 migrasi: dialihkan ke backend Vercel (sudah diverifikasi paralel).
+  // ROLLBACK CEPAT kalau ada masalah: ganti VERCEL_BACKEND_URL + '/submitAbsensi'
+  // di baris fetch() bawah ini balik jadi SCRIPT_URL (constant-nya masih ada,
+  // gak dihapus, justru buat ini).
+  fetch(VERCEL_BACKEND_URL + '/submitAbsensi', {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ token: getToken(), jenisAbsen, keterangan, isSakit, latitude, longitude, qrResult, butuhQr,
       photoBase64: isSakit ? '' : photoBase64, screenshotBase64: isSakit ? screenshotBase64 : '' })
