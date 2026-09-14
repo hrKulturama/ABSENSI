@@ -5,35 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Report Produksi</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00875F">
+<meta name="theme-color" content="#4FAE87">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --font-display: 'Baloo 2', sans-serif;
+    --font-display: 'Big Shoulders Display', sans-serif;
     --font-body: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
-    --bg: #F3EEE2;
-    --bg-dot: rgba(28,29,31,0.07);
-    --ink: #201F1C;
-    --ink-soft: #77746C;
-    --ink-faint: #ACA89D;
+    --font-mono: 'Space Mono', 'SF Mono', Consolas, monospace;
+    --bg: #FBF1EC;
+    --bg-dot: rgba(61,55,80,0.06);
+    --ink: #3D3750;
+    --ink-soft: #8B8299;
+    --ink-faint: #BDB6C7;
     --surface: #FFFFFF;
-    --surface-2: #FAF7EF;
-    --border: rgba(32,31,28,0.10);
-    --mint: #00B383;
-    --mint-deep: #00875F;
-    --mint-ink: #DCF4EA;
-    --mint-text: #036A4B;
-    --danger: #E24545;
-    --danger-ink: #FBE1E1;
-    --danger-text: #A82A2A;
-    --radius: 24px;
-    --radius-sm: 16px;
-    --shadow-card: 0 1px 0 rgba(32,31,28,0.04), 0 10px 22px rgba(32,31,28,0.06);
-    --shadow-pop: 0 4px 0 rgba(0,0,0,0.14);
+    --surface-2: #F7F0FA;
+    --border: rgba(61,55,80,0.12);
+    --mint: #9FE6C8;
+    --mint-deep: #4FAE87;
+    --mint-ink: #E4FAF1;
+    --mint-text: #2E7D5C;
+    --danger: #F0958E;
+    --danger-ink: #FCE4E2;
+    --danger-text: #B5453D;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --shadow-card: 0 1px 0 rgba(61,55,80,0.04), 0 10px 22px rgba(61,55,80,0.08);
+    --shadow-pop: 0 4px 0 rgba(61,55,80,0.18);
+    --dash: 2px dashed rgba(61,55,80,0.25);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
@@ -51,14 +53,14 @@
   }
   .btn {
     width: 100%; padding: 15px; border: none; border-radius: 999px;
-    background: var(--mint); color: #fff; font-size: 15px; font-weight: 800;
+    background: var(--mint); color: var(--mint-text); font-size: 15px; font-weight: 800;
     cursor: pointer; margin-top: 8px; font-family: var(--font-display);
     box-shadow: var(--shadow-pop); letter-spacing: 0.2px;
   }
   .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
   .btn-secondary { background: var(--surface-2); color: var(--ink); border: 1.5px solid var(--border); box-shadow: none; }
 
-  .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: var(--dash); }
   .back-btn {
     width: 40px; height: 40px; border-radius: 50%; background: var(--surface);
     border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center;
@@ -70,11 +72,12 @@
   .role-chip {
     display: inline-flex; align-items: center; gap: 6px; background: var(--mint-ink);
     color: var(--mint-text); padding: 6px 12px; border-radius: 999px;
-    font-size: 11.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase;
+    font-family: var(--font-mono);
   }
 
   .status-box { padding: 13px 16px; border-radius: var(--radius-sm); font-weight: 700; text-align: center; font-size: 14px; }
-  .status-fail { background: var(--danger-ink); color: var(--danger-text); border: 1px solid rgba(226,69,69,0.2); }
+  .status-fail { background: var(--danger-ink); color: var(--danger-text); border: 1px solid rgba(240,149,142,0.35); }
   .info-text { font-size: 13px; color: var(--ink-soft); text-align: center; margin: 8px 0; font-weight: 600; line-height: 1.55; }
 
   /* Layar tunggu & tolak */
@@ -85,7 +88,7 @@
   .center-title { font-family: var(--font-display); font-size: 21px; font-weight: 700; margin-bottom: 8px; }
   .spinner {
     width: 34px; height: 34px; border: 3.5px solid var(--border);
-    border-top-color: var(--mint); border-radius: 50%; animation: spin 0.8s linear infinite;
+    border-top-color: var(--mint-deep); border-radius: 50%; animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }

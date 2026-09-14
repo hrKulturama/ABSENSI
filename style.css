@@ -1,53 +1,65 @@
 :root {
-    --font-display: 'Baloo 2', sans-serif;
-    --font-body: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+    /* ===== TEMA "SHOEBOX TAG" — versi pastel =====
+       Palet ke-3: pastel lembut (bukan kraft/gold, bukan krem-mint lama).
+       Tipografi & elemen struktural (dashed line, tag badge, radius
+       bervariasi) tetap sama seperti sebelumnya — cuma warnanya yang ganti. */
+    --font-display: 'Big Shoulders Display', sans-serif; /* heading — kondensat/tebal, kesan stensil label */
+    --font-body: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif; /* body text, tetap nyaman dibaca panjang */
+    --font-mono: 'Space Mono', 'SF Mono', Consolas, monospace; /* angka/data — skor, jam, rupiah, ala barcode/size-chart */
 
-    --bg: #F3EEE2;
-    --bg-dot: rgba(28,29,31,0.07);
-    --ink: #201F1C;
-    --ink-soft: #77746C;
-    --ink-faint: #ACA89D;
+    --bg: #FBF1EC;
+    --bg-dot: rgba(61,55,80,0.06);
+    --ink: #3D3750;
+    --ink-soft: #8B8299;
+    --ink-faint: #BDB6C7;
 
     --surface: #FFFFFF;
-    --surface-2: #FAF7EF;
-    --border: rgba(32,31,28,0.10);
+    --surface-2: #F7F0FA;
+    --border: rgba(61,55,80,0.12);
 
-    --mint: #00B383;
-    --mint-deep: #00875F;
-    --mint-ink: #DCF4EA;
-    --mint-text: #036A4B;
+    --mint: #9FE6C8;
+    --mint-deep: #4FAE87;
+    --mint-ink: #E4FAF1;
+    --mint-text: #2E7D5C;
 
-    --blue: #3363EC;
-    --blue-deep: #1F45C4;
-    --blue-ink: #E4EAFD;
-    --blue-text: #1F3FAE;
+    --blue: #A9D8F5;
+    --blue-deep: #5B9BC9;
+    --blue-ink: #E7F4FC;
+    --blue-text: #3A6E93;
 
-    --coral: #FF6B4A;
-    --coral-deep: #E44A28;
-    --coral-ink: #FFE4DA;
-    --coral-text: #B33D1F;
+    --coral: #F7B39C;
+    --coral-deep: #E0805E;
+    --coral-ink: #FDEEE7;
+    --coral-text: #B85A38;
 
-    --yellow: #FFC93C;
-    --yellow-ink: #FFF2CE;
-    --yellow-text: #8A6300;
+    --yellow: #FCE49A;
+    --yellow-deep: #D9AE3E;
+    --yellow-ink: #FDF3D9;
+    --yellow-text: #8A6A1A;
 
-    --pink: #E23A79;
-    --pink-ink: #FBE0EC;
-    --pink-text: #A62658;
+    --pink: #F5AFCB;
+    --pink-ink: #FCE9F1;
+    --pink-text: #B9527E;
 
-    --purple: #7C5CFC;
-    --purple-ink: #EBE4FF;
-    --purple-text: #5738C4;
+    --purple: #C7B3EC;
+    --purple-ink: #F1EBFC;
+    --purple-text: #6B4FA0;
 
-    --danger: #E24545;
-    --danger-ink: #FBE1E1;
-    --danger-text: #A82A2A;
+    --danger: #F0958E;
+    --danger-deep: #D45C51;
+    --danger-ink: #FCE4E2;
+    --danger-text: #B5453D;
 
-    --radius: 24px;
-    --radius-sm: 16px;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-tag: 999px; /* badge/pill kecil ala size-tag — selalu oval penuh */
     --nav-h: 76px;
-    --shadow-card: 0 1px 0 rgba(32,31,28,0.04), 0 10px 22px rgba(32,31,28,0.06);
-    --shadow-pop: 0 4px 0 rgba(0,0,0,0.14);
+    --shadow-card: 0 1px 0 rgba(61,55,80,0.04), 0 10px 22px rgba(61,55,80,0.08);
+    --shadow-pop: 0 4px 0 rgba(61,55,80,0.18);
+
+    /* Garis putus-putus ala "tear here" / perforasi label — DIPAKAI TERBATAS,
+       cuma di titik yang make sense (lihat komentar di masing-masing tempat). */
+    --dash: 2px dashed rgba(61,55,80,0.25);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
@@ -90,7 +102,7 @@
   }
   .nav-item .nav-icon { font-size: 20px; line-height: 1; filter: none; transition: all 0.2s; }
   .nav-item .nav-label { font-size: 0; max-width: 0; overflow: hidden; white-space: nowrap; font-family: var(--font-display); font-weight: 700; transition: all 0.25s; }
-  .nav-item.active { background: var(--mint); color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.12); flex: 1.5; }
+  .nav-item.active { background: var(--mint); color: var(--mint-text); box-shadow: 0 3px 0 rgba(0,0,0,0.12); flex: 1.5; }
   .nav-item.active .nav-icon { transform: scale(1.05); }
   .nav-item.active .nav-label { font-size: 13px; max-width: 90px; margin-left: 1px; }
 
@@ -111,7 +123,7 @@
 
   .btn {
     width: 100%; padding: 15px; border: none; border-radius: 999px;
-    background: var(--mint); color: #fff; font-size: 15px; font-weight: 800;
+    background: var(--mint); color: var(--mint-text); font-size: 15px; font-weight: 800;
     cursor: pointer; margin-top: 8px; transition: all 0.15s; letter-spacing: 0.2px;
     font-family: var(--font-display); box-shadow: var(--shadow-pop);
   }
@@ -121,11 +133,22 @@
   .btn-outline { background: transparent; border: 2px solid var(--mint); color: var(--mint-deep); box-shadow: none; }
 
   .status-box { padding: 12px 16px; border-radius: var(--radius-sm); font-weight: 700; text-align: center; margin-top: 8px; font-size: 14px; }
-  .status-ok { background: var(--mint-ink); color: var(--mint-text); border: 1px solid rgba(0,179,131,0.2); }
-  .status-fail { background: var(--danger-ink); color: var(--danger-text); border: 1px solid rgba(226,69,69,0.2); }
+  .status-ok { background: var(--mint-ink); color: var(--mint-text); border: 1px solid rgba(79,174,135,0.2); }
+  .status-fail { background: var(--danger-ink); color: var(--danger-text); border: 1px solid rgba(240,149,142,0.35); }
   .info-text { font-size: 13px; color: var(--ink-soft); text-align: center; margin: 6px 0 12px; font-weight: 600; }
 
-  .section-label { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--ink); margin: 20px 0 10px; }
+  .section-label { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--ink); margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* Badge oval kecil ala size-tag sepatu — dipakai buat nampilin status
+     singkat (mis. "Karyawan Aktif"). Font mono biar kerasa kayak kode tag. */
+  .tag-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--mint-ink); color: var(--mint-text);
+    padding: 3px 11px; border-radius: var(--radius-tag);
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+    font-family: var(--font-mono); text-transform: uppercase;
+    border: 1px solid rgba(61,55,80,0.12);
+  }
 
   /* ===== HOME ===== */
   #page-home { padding: 32px 16px 18px; }
@@ -143,8 +166,8 @@
   .badge-circle img { width: 100%; height: 100%; object-fit: cover; }
   .badge-flame-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .badge-pill {
-    display: flex; align-items: center; gap: 5px; background: var(--coral); color: #fff;
-    padding: 9px 13px; border-radius: 999px; font-weight: 800; font-family: var(--font-display);
+    display: flex; align-items: center; gap: 5px; background: var(--coral); color: var(--coral-text);
+    padding: 9px 13px; border-radius: 999px; font-weight: 700; font-family: var(--font-mono);
     font-size: 13px; box-shadow: 0 3px 0 rgba(0,0,0,0.12); white-space: nowrap;
   }
   .badge-pill-caption { font-size: 9px; color: var(--ink-soft); font-weight: 700; text-align: center; max-width: 74px; line-height: 1.25; }
@@ -161,9 +184,9 @@
   .date-item:nth-child(7n+5) { background: var(--yellow-ink); }
   .date-item:nth-child(7n+6) { background: var(--purple-ink); }
   .date-item .day-name { font-size: 9px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.4px; }
-  .date-item .day-num { font-size: 15px; font-weight: 800; color: var(--ink); line-height: 1; font-family: var(--font-display); }
+  .date-item .day-num { font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1; font-family: var(--font-mono); }
   .date-item.today { background: var(--mint); border-color: var(--mint); box-shadow: 0 3px 0 rgba(0,0,0,0.12); transform: translateY(-2px); }
-  .date-item.today .day-name, .date-item.today .day-num { color: #fff; }
+  .date-item.today .day-name, .date-item.today .day-num { color: var(--mint-text); }
 
   .coming-soon-card { background: var(--surface); border-radius: var(--radius); padding: 30px 16px; text-align: center; margin-bottom: 12px; border: 2px dashed var(--border); }
   .coming-soon-card .cs-emoji { font-size: 26px; margin-bottom: 8px; }
@@ -175,34 +198,34 @@
     border-radius: 26px; padding: 20px; color: #fff; position: relative; overflow: hidden;
     box-shadow: var(--shadow-card); margin-bottom: 12px; cursor: pointer; border: none;
   }
-  .action-card.blue { background: linear-gradient(150deg, #3E71F5 0%, #2447C4 100%); }
+  .action-card.blue { background: linear-gradient(150deg, #4A97CE 0%, #2C6690 100%); }
   .action-card-title { font-family: var(--font-display); font-size: 19px; font-weight: 700; margin-bottom: 4px; }
   .action-card-sub { font-size: 12.5px; opacity: 0.85; max-width: 68%; font-weight: 500; line-height: 1.4; }
   .action-card-emoji { position: absolute; right: 16px; bottom: 14px; font-size: 40px; opacity: 0.9; }
 
   /* Card leaderboard ringkas di Home, nyambung ke tab Papan */
-  .action-card.purple { background: linear-gradient(150deg, #9179FF 0%, #5738C4 100%); }
+  .action-card.purple { background: linear-gradient(150deg, #9575D6 0%, #6142A8 100%); }
   /* Kartu menu khusus role (Kreatif / Produksi) */
-  .action-card.mint { background: linear-gradient(150deg, #00C692 0%, #007854 100%); }
+  .action-card.mint { background: linear-gradient(150deg, #5FC79A 0%, #3D9670 100%); }
   .action-card-rank {
     position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
     background: rgba(255,255,255,0.16); border: 1.5px solid rgba(255,255,255,0.3);
     border-radius: 16px; padding: 10px 14px; text-align: center; min-width: 52px;
   }
-  .action-card-rank .rank-num { font-size: 20px; font-weight: 800; font-family: var(--font-display); line-height: 1; color: #fff; }
+  .action-card-rank .rank-num { font-size: 20px; font-weight: 700; font-family: var(--font-mono); line-height: 1; color: #fff; }
   .action-card-rank .rank-label { font-size: 8.5px; font-weight: 700; opacity: 0.85; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; color: #fff; }
 
   /* Card batas absen (countdown ke 08:05) — pakai bahasa action-card */
   .today-absen-card {
-    background: linear-gradient(150deg, #00C896 0%, #00875F 100%);
+    background: linear-gradient(150deg, #5FC79A 0%, #3D9670 100%);
     border-radius: 26px; padding: 20px; margin-bottom: 12px; color: #fff;
     box-shadow: var(--shadow-card); position: relative; overflow: hidden; transition: all 0.2s;
   }
   .today-absen-card::after { content: '⏰'; position: absolute; right: 16px; bottom: 10px; font-size: 40px; opacity: 0.85; }
   .today-absen-label { font-size: 12px; color: rgba(255,255,255,0.85); margin-bottom: 6px; font-weight: 700; }
-  .today-absen-time { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+  .today-absen-time { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
   .today-absen-card.countdown-late {
-    background: linear-gradient(150deg, #FF7A5C 0%, #D8391A 100%);
+    background: linear-gradient(150deg, #E17A72 0%, #C24339 100%);
   }
   .today-absen-card.countdown-late::after { content: '⚠️'; }
   .today-absen-card.countdown-late .today-absen-time { font-size: 17px; }
@@ -219,7 +242,7 @@
   }
   .today-summary-info { min-width: 0; }
   .today-summary-label { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
-  .today-summary-jam { font-size: 18px; font-weight: 800; margin-top: 2px; font-family: var(--font-display); color: var(--ink); }
+  .today-summary-jam { font-size: 18px; font-weight: 700; margin-top: 2px; font-family: var(--font-mono); color: var(--ink); }
 
   /* Leaderboard */
   .lb-top3 { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 14px; margin-top: 6px; }
@@ -248,11 +271,11 @@
     width: 100%; border-radius: 18px 18px 0 0; display: flex; align-items: flex-start;
     justify-content: center; padding-top: 26px; font-size: 22px; font-weight: 800;
     color: rgba(0,135,95,0.4); background: linear-gradient(180deg, var(--mint-ink), rgba(220,244,234,0.3));
-    border: 1px solid rgba(0,179,131,0.18); border-bottom: none; box-sizing: border-box; font-family: var(--font-display);
+    border: 1px solid rgba(79,174,135,0.18); border-bottom: none; box-sizing: border-box; font-family: var(--font-display);
   }
-  .lb-top-col.rank-1 .lb-bar { height: 106px; background: linear-gradient(180deg, var(--yellow-ink), rgba(255,242,206,0.3)); border-color: rgba(255,201,60,0.3); color: #B58900; }
-  .lb-top-col.rank-2 .lb-bar { height: 80px; background: linear-gradient(180deg, var(--blue-ink), rgba(228,234,253,0.3)); border-color: rgba(51,99,236,0.2); color: var(--blue-text); }
-  .lb-top-col.rank-3 .lb-bar { height: 58px; background: linear-gradient(180deg, var(--coral-ink), rgba(255,228,218,0.3)); border-color: rgba(255,107,74,0.25); color: var(--coral-text); }
+  .lb-top-col.rank-1 .lb-bar { height: 106px; background: linear-gradient(180deg, var(--yellow-ink), rgba(253,243,217,0.3)); border-color: rgba(217,174,62,0.4); color: var(--yellow-text); }
+  .lb-top-col.rank-2 .lb-bar { height: 80px; background: linear-gradient(180deg, var(--blue-ink), rgba(231,244,252,0.3)); border-color: rgba(91,155,201,0.3); color: var(--blue-text); }
+  .lb-top-col.rank-3 .lb-bar { height: 58px; background: linear-gradient(180deg, var(--coral-ink), rgba(253,238,231,0.3)); border-color: rgba(224,128,94,0.3); color: var(--coral-text); }
 
   .lb-rest-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .lb-rest-item:last-child { border-bottom: none; }
@@ -315,7 +338,11 @@
   /* ===== PROFIL ===== */
   #page-profil { padding: 32px 16px 18px; }
   #page-slip-gaji { padding: 32px 16px 18px; }
-  .profil-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-top: 8px; }
+  /* Garis putus-putus di sini SENGAJA — ala sobekan label yang nempel di
+     kotak sepatu, misahin identitas (foto+nama) dari isi konten di bawahnya.
+     Ini salah satu dari cuma 2 titik dashed di halaman ini (yang lain: kartu
+     Rekap Bulan Ini) — biar berasa pilihan, bukan default di semua kartu. */
+  .profil-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 8px 0 22px; border-bottom: var(--dash); }
   .profil-foto-wrap { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
   .profil-foto {
     width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
@@ -333,10 +360,14 @@
   .profil-nama { font-size: 20px; font-weight: 800; margin-bottom: 2px; font-family: var(--font-display); color: var(--ink); }
   .profil-sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 8px; font-weight: 600; }
 
+  /* Bungkus "tiket" bergaris putus-putus — titik dashed KEDUA (dan terakhir)
+     di halaman ini, ngebungkus 4 angka rekap kayak stub tiket/label yang
+     disobek dari kotak. */
+  .stat-ticket { border: var(--dash); border-radius: var(--radius-sm); padding: 14px 10px; }
   .stat-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .stat-item { border-radius: var(--radius-sm); padding: 12px 6px; text-align: center; border: 1px solid var(--border); }
-  .stat-item .s-num { font-size: 21px; font-weight: 800; font-family: var(--font-display); }
-  .stat-item .s-label { font-size: 10px; color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+  .stat-item { border-radius: 10px; padding: 12px 6px; text-align: center; border: 1px solid var(--border); }
+  .stat-item .s-num { font-size: 20px; font-weight: 700; font-family: var(--font-mono); }
+  .stat-item .s-label { font-size: 10px; color: var(--ink-soft); font-weight: 700; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
   .s-hadir { background: var(--mint-ink); } .s-hadir .s-num { color: var(--mint-text); }
   .s-sakit { background: var(--yellow-ink); } .s-sakit .s-num { color: var(--yellow-text); }
   .s-ijin { background: var(--purple-ink); } .s-ijin .s-num { color: var(--purple-text); }
@@ -350,13 +381,14 @@
   .cal-day {
     aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
     border-radius: 50%; font-size: 12px; font-weight: 700; position: relative; color: var(--ink);
+    font-family: var(--font-mono);
   }
   .cal-day.past { color: var(--ink-faint); }
-  .cal-day.today { background: var(--mint); color: #fff; box-shadow: 0 2px 8px rgba(0,179,131,0.35); font-weight: 800; }
+  .cal-day.today { background: var(--mint); color: var(--mint-text); box-shadow: 0 2px 8px rgba(79,174,135,0.4); font-weight: 800; }
   .cal-day.future { color: var(--ink); }
   .cal-day.empty { visibility: hidden; }
   .cal-day.has-absen::after { content: ''; position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--mint); }
-  .cal-day.today.has-absen::after { background: #fff; }
+  .cal-day.today.has-absen::after { background: var(--mint-text); }
   .cal-day.lambat::after { background: var(--danger) !important; }
 
   /* CHART */
@@ -387,17 +419,18 @@
   }
   .riwayat-info { flex: 1; min-width: 0; }
   .riwayat-jenis { font-size: 14px; font-weight: 700; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--ink); }
-  .riwayat-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; font-weight: 600; }
+  .riwayat-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; font-weight: 600; font-family: var(--font-mono); }
   .riwayat-ket { font-size: 12px; color: var(--ink-soft); margin-top: 4px; font-style: italic; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .riwayat-lambat {
     font-size: 10px; font-weight: 800; color: var(--danger-text);
-    background: var(--danger-ink); padding: 2px 7px; border-radius: 6px;
+    background: var(--danger-ink); padding: 2px 9px; border-radius: var(--radius-tag);
   }
   .riwayat-empty { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 20px 0; font-weight: 600; }
 
   /* Badge poin harian di Detail Karyawan (Mode HR doang) — warna berubah sesuai skor */
   .riwayat-poin-badge {
-    font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: auto;
+    font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: auto;
+    font-family: var(--font-mono);
   }
   .riwayat-poin-badge.poin-bagus  { color: var(--mint-text); background: var(--mint-ink); }
   .riwayat-poin-badge.poin-sedang { color: #8A6300; background: #FBF0D2; }
@@ -405,7 +438,7 @@
 
   .profil-reset { text-align: center; margin-top: 24px; padding-bottom: 8px; }
   .profil-reset button {
-    background: var(--surface); border: 1.5px solid rgba(226,69,69,0.3); color: var(--danger-text);
+    background: var(--surface); border: 1.5px solid rgba(240,149,142,0.5); color: var(--danger-text);
     border-radius: var(--radius-sm); padding: 10px 24px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-body);
   }
 
@@ -595,7 +628,7 @@
      transform/opacity), yang di tempat lain sengaja dihindari karena berat
      kalau JALAN TERUS-MENERUS. Ini aman karena cuma sekali tembak (0.6 detik,
      gak looping) tiap satu kali scan berhasil, jadi biayanya kecil. */
-  @keyframes qrPulseRing { 0% { box-shadow: 0 0 0 0 rgba(0,179,131,0.55); } 100% { box-shadow: 0 0 0 22px rgba(0,179,131,0); } }
+  @keyframes qrPulseRing { 0% { box-shadow: 0 0 0 0 rgba(79,174,135,0.55); } 100% { box-shadow: 0 0 0 22px rgba(79,174,135,0); } }
   #qr-reader.qr-sukses { animation: qrPulseRing 0.6s ease-out; border-radius: var(--radius-sm); }
 
   /* 7. Spinner loading — sebelumnya cuma teks polos "Memuat data..." di 5
@@ -603,7 +636,7 @@
      kreatif.html/produksi.html. */
   .spinner-inline {
     display: inline-block; width: 16px; height: 16px; margin-right: 8px;
-    border: 2.5px solid var(--border); border-top-color: var(--mint);
+    border: 2.5px solid var(--border); border-top-color: var(--mint-deep);
     border-radius: 50%; vertical-align: -3px;
     animation: spinnerSpin 0.8s linear infinite;
   }
@@ -624,7 +657,7 @@
   .hr-payroll-item:last-child { border-bottom: none; }
   .hr-payroll-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
   .hr-payroll-nama { font-size: 14.5px; font-weight: 700; color: var(--ink); }
-  .hr-payroll-total { font-size: 14.5px; font-weight: 800; color: var(--mint-deep); font-family: var(--font-display); white-space: nowrap; }
+  .hr-payroll-total { font-size: 14.5px; font-weight: 700; color: var(--mint-deep); font-family: var(--font-mono); white-space: nowrap; }
   .hr-payroll-warn { font-size: 12px; color: var(--danger-text); font-weight: 700; margin-top: 4px; }
   .hr-payroll-chevron { color: var(--ink-faint); font-size: 12px; margin-left: 6px; display: inline-block; transition: transform 0.2s; }
   .hr-payroll-item.open .hr-payroll-chevron { transform: rotate(180deg); }
@@ -633,7 +666,7 @@
   .hr-payroll-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--ink-soft); font-weight: 600; padding: 3px 0; }
   .hr-payroll-row span:last-child { color: var(--ink); font-weight: 700; text-align: right; }
   .hr-payroll-row.total-row { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px; }
-  .hr-payroll-row.total-row span:last-child { color: var(--mint-deep); font-family: var(--font-display); font-size: 14px; }
+  .hr-payroll-row.total-row span:last-child { color: var(--mint-deep); font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
   .hr-template-placeholder-list { font-size: 12px; line-height: 2.1; }
   .hr-template-placeholder-list code {
     background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;

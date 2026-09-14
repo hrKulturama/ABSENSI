@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Absensi</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00875F">
+<meta name="theme-color" content="#4FAE87">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Absensi">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- html5-qrcode & chart.js SENGAJA gak dimuat di sini lagi — dua-duanya lumayan
      berat (~150-200KB masing-masing) dan cuma dipakai di 1 fitur spesifik
      (scan QR pas absen, chart di halaman Profil). Sebelumnya kedua-duanya
@@ -275,7 +275,7 @@
   </div>
   <div class="profil-info">
     <div class="profil-nama" id="profilNama">—</div>
-    <div class="profil-sub">Karyawan Aktif</div>
+    <div class="profil-sub"><span class="tag-badge">Karyawan Aktif</span></div>
   </div>
 </div>
 
@@ -295,11 +295,13 @@
 
     <!-- Stat 4 kolom -->
     <div class="section-label">Rekap Bulan Ini</div>
-    <div class="stat-grid-4">
-      <div class="stat-item s-hadir"><div class="s-num" id="statHadir">—</div><div class="s-label">Hadir</div></div>
-      <div class="stat-item s-sakit"><div class="s-num" id="statSakit">—</div><div class="s-label">Sakit</div></div>
-      <div class="stat-item s-ijin"><div class="s-num" id="statIjin">—</div><div class="s-label">Ijin</div></div>
-      <div class="stat-item s-lambat"><div class="s-num" id="statLambat">—</div><div class="s-label">Terlambat</div></div>
+    <div class="stat-ticket">
+      <div class="stat-grid-4">
+        <div class="stat-item s-hadir"><div class="s-num" id="statHadir">—</div><div class="s-label">Hadir</div></div>
+        <div class="stat-item s-sakit"><div class="s-num" id="statSakit">—</div><div class="s-label">Sakit</div></div>
+        <div class="stat-item s-ijin"><div class="s-num" id="statIjin">—</div><div class="s-label">Ijin</div></div>
+        <div class="stat-item s-lambat"><div class="s-num" id="statLambat">—</div><div class="s-label">Terlambat</div></div>
+      </div>
     </div>
 
     <!-- Chart area bertumpuk -->
@@ -420,11 +422,13 @@
     </div>
     <div id="hrDetailPeriodeLabel" class="info-text" style="margin-top:-8px"></div>
 
-    <div class="stat-grid-4">
-      <div class="stat-item s-hadir"><div class="s-num" id="hrDStatHadir">—</div><div class="s-label">Hadir</div></div>
-      <div class="stat-item s-sakit"><div class="s-num" id="hrDStatSakit">—</div><div class="s-label">Sakit</div></div>
-      <div class="stat-item s-ijin"><div class="s-num" id="hrDStatIjin">—</div><div class="s-label">Ijin</div></div>
-      <div class="stat-item s-lambat"><div class="s-num" id="hrDStatLambat">—</div><div class="s-label">Terlambat</div></div>
+    <div class="stat-ticket">
+      <div class="stat-grid-4">
+        <div class="stat-item s-hadir"><div class="s-num" id="hrDStatHadir">—</div><div class="s-label">Hadir</div></div>
+        <div class="stat-item s-sakit"><div class="s-num" id="hrDStatSakit">—</div><div class="s-label">Sakit</div></div>
+        <div class="stat-item s-ijin"><div class="s-num" id="hrDStatIjin">—</div><div class="s-label">Ijin</div></div>
+        <div class="stat-item s-lambat"><div class="s-num" id="hrDStatLambat">—</div><div class="s-label">Terlambat</div></div>
+      </div>
     </div>
 
     <div id="hrDetailRiwayat"></div>

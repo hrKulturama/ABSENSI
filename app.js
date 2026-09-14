@@ -1156,7 +1156,7 @@ async function renderChart(absensi, lastDay, year, month) {
 
   const labels = Array.from({length: lastDay}, (_, i) => i + 1);
   const garisBatas = new Array(lastDay).fill(BATAS_JAM);
-  const barColors = jamMasukPerDay.map(v => v === null ? 'rgba(0,0,0,0)' : (v > BATAS_JAM ? '#E24545' : '#00B383'));
+  const barColors = jamMasukPerDay.map(v => v === null ? 'rgba(0,0,0,0)' : (v > BATAS_JAM ? '#D45C51' : '#4FAE87'));
 
   const validValues = jamMasukPerDay.filter(v => v !== null);
   let yMin = 6, yMax = 10;
@@ -1185,7 +1185,7 @@ async function renderChart(absensi, lastDay, year, month) {
           type: 'line',
           label: 'Batas (08:05)',
           data: garisBatas,
-          borderColor: '#ACA89D',
+          borderColor: '#BDB6C7',
           borderDash: [6, 4],
           borderWidth: 1.5,
           pointRadius: 0,
@@ -1199,7 +1199,7 @@ async function renderChart(absensi, lastDay, year, month) {
       plugins: {
         legend: {
           display: true, position: 'bottom',
-          labels: { color: '#77746C', font: { size: 10 }, boxWidth: 10, padding: 10, usePointStyle: true }
+          labels: { color: '#8B8299', font: { size: 10 }, boxWidth: 10, padding: 10, usePointStyle: true }
         },
         tooltip: {
           callbacks: {
@@ -1214,14 +1214,14 @@ async function renderChart(absensi, lastDay, year, month) {
         }
       },
       scales: {
-        x: { ticks: { color: '#77746C', font: { size: 10 }, maxTicksLimit: 10 }, grid: { color: 'rgba(32,31,28,0.05)' }, border: { color: 'transparent' } },
+        x: { ticks: { color: '#8B8299', font: { size: 10 }, maxTicksLimit: 10 }, grid: { color: 'rgba(61,55,80,0.06)' }, border: { color: 'transparent' } },
         y: {
           min: yMin, max: yMax,
           ticks: {
-            color: '#77746C', font: { size: 10 }, stepSize: 1,
+            color: '#8B8299', font: { size: 10 }, stepSize: 1,
             callback: v => String(v).padStart(2, '0') + ':00'
           },
-          grid: { color: 'rgba(32,31,28,0.05)' }, border: { color: 'transparent' }
+          grid: { color: 'rgba(61,55,80,0.06)' }, border: { color: 'transparent' }
         }
       }
     }
