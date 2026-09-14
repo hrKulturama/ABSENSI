@@ -169,7 +169,7 @@ async function loadSlipGajiSaya() {
   try {
     // Nama TIDAK dikirim di URL — server ambil dari token sendiri, jadi gak
     // ada cara buat minta lihat gaji orang lain walau parameter-nya diutak-atik.
-    const url = SCRIPT_URL + '?action=getPayroll&month=' + month + '&year=' + year + '&token=' + encodeURIComponent(getToken());
+    const url = VERCEL_BACKEND_URL + '/getPayroll?month=' + month + '&year=' + year + '&token=' + encodeURIComponent(getToken());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     loading.style.display = 'none';
@@ -206,7 +206,7 @@ async function unduhSlipGajiSaya() {
 
   try {
     // Sama kayak di atas — nama gak dikirim, diambil dari token sendiri di server.
-    const url = SCRIPT_URL + '?action=getSlipGajiPdf&month=' + month + '&year=' + year + '&token=' + encodeURIComponent(getToken());
+    const url = VERCEL_BACKEND_URL + '/getSlipGajiPdf?month=' + month + '&year=' + year + '&token=' + encodeURIComponent(getToken());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
 
@@ -1689,7 +1689,7 @@ function tokenHR() {
 }
 
 async function hrFetchRekap(month, year) {
-  const url = SCRIPT_URL + '?action=getRekapHR&token=' + encodeURIComponent(tokenHR()) + '&month=' + month + '&year=' + year;
+  const url = VERCEL_BACKEND_URL + '/hr?action=getRekapHR&token=' + encodeURIComponent(tokenHR()) + '&month=' + month + '&year=' + year;
   const res = await fetch(url, { redirect: 'follow' });
   const rawText = await res.text();
   if (rawText.trim().startsWith('<')) {
@@ -1955,7 +1955,7 @@ async function hrLoadPayroll() {
   const year = document.getElementById('hrPayrollTahun').value;
 
   try {
-    const url = SCRIPT_URL + '?action=getPayrollSemua&month=' + month + '&year=' + year + '&token=' + encodeURIComponent(tokenHR());
+    const url = VERCEL_BACKEND_URL + '/hr?action=getPayrollSemua&month=' + month + '&year=' + year + '&token=' + encodeURIComponent(tokenHR());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     loading.style.display = 'none';
@@ -2040,7 +2040,7 @@ async function hrUnduhSlipGaji(nama, month, year, idx) {
   if (statusBox) statusBox.innerHTML = '<div class="status-box status-ok"><span class="spinner-inline"></span>Membuat PDF...</div>';
 
   try {
-    const url = SCRIPT_URL + '?action=getSlipGajiPdf&nama=' + encodeURIComponent(nama) + '&month=' + month + '&year=' + year + '&token=' + encodeURIComponent(tokenHR());
+    const url = VERCEL_BACKEND_URL + '/getSlipGajiPdf?nama=' + encodeURIComponent(nama) + '&month=' + month + '&year=' + year + '&token=' + encodeURIComponent(tokenHR());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
 
@@ -2078,7 +2078,7 @@ async function hrLoadKaryawanList() {
   listBox.innerHTML = '';
 
   try {
-    const url = SCRIPT_URL + '?action=getKaryawanHR&token=' + encodeURIComponent(tokenHR());
+    const url = VERCEL_BACKEND_URL + '/hr?action=getKaryawanHR&token=' + encodeURIComponent(tokenHR());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     loading.style.display = 'none';
@@ -2145,7 +2145,7 @@ async function hrHitungUlangSemuaSkor(btnEl) {
   btnEl.textContent = 'Menghitung...';
 
   try {
-    const res = await fetch(SCRIPT_URL, {
+    const res = await fetch(VERCEL_BACKEND_URL + '/hr', {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'hitungUlangSemuaSkor', token: tokenHR() })
@@ -2186,7 +2186,7 @@ async function hrResetPinKaryawan(nama) {
   errBox.innerHTML = '';
 
   try {
-    const res = await fetch(SCRIPT_URL, {
+    const res = await fetch(VERCEL_BACKEND_URL + '/hr', {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'resetPin', token: tokenHR(), nama })
@@ -2295,7 +2295,7 @@ let hrLaporanTemplateCache = null;
 async function hrAmbilLaporanTemplate() {
   if (hrLaporanTemplateCache) return hrLaporanTemplateCache;
   try {
-    const url = SCRIPT_URL + '?action=getLaporanTemplate&token=' + encodeURIComponent(tokenHR());
+    const url = VERCEL_BACKEND_URL + '/hr?action=getLaporanTemplate&token=' + encodeURIComponent(tokenHR());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     if (data.result === 'success') {
@@ -2420,7 +2420,7 @@ async function hrLoadTemplateEditor() {
   document.getElementById('hrTemplateStatus').textContent = '';
 
   try {
-    const url = SCRIPT_URL + '?action=getLaporanTemplate&token=' + encodeURIComponent(tokenHR());
+    const url = VERCEL_BACKEND_URL + '/hr?action=getLaporanTemplate&token=' + encodeURIComponent(tokenHR());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     loading.style.display = 'none';
@@ -2464,7 +2464,7 @@ async function hrSimpanTemplate() {
   statusBox.innerHTML = '<span class="spinner-inline"></span>Menyimpan...';
 
   try {
-    const res = await fetch(SCRIPT_URL, {
+    const res = await fetch(VERCEL_BACKEND_URL + '/hr', {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'simpanLaporanTemplate', token: tokenHR(), template })
