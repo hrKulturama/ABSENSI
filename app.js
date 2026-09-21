@@ -956,11 +956,10 @@ function submitAbsensi() {
   // Identitas dikirim lewat token, BUKAN lewat nama. Server yang menentukan
   // absen ini tercatat atas nama siapa — jadi absen gak bisa dititipin.
   //
-  // TAHAP 3 migrasi: dialihkan ke backend Vercel (sudah diverifikasi paralel).
-  // ROLLBACK CEPAT kalau ada masalah: ganti VERCEL_BACKEND_URL + '/submitAbsensi'
-  // di baris fetch() bawah ini balik jadi SCRIPT_URL (constant-nya masih ada,
-  // gak dihapus, justru buat ini).
-  fetch(VERCEL_BACKEND_URL + '/submitAbsensi', {
+  // ROLLBACK: submitAbsensi dibalikin ke SCRIPT_URL (Apps Script) karena
+  // backend Vercel gagal buat sebagian karyawan. VERCEL_BACKEND_URL tetap
+  // dipakai endpoint lain yang sudah terverifikasi jalan normal.
+  fetch(SCRIPT_URL, {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ token: getToken(), jenisAbsen, keterangan, isSakit, latitude, longitude, qrResult, butuhQr,
       photoBase64: isSakit ? '' : photoBase64, screenshotBase64: isSakit ? screenshotBase64 : '' })
