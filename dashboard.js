@@ -29,7 +29,7 @@
   const $ = (id) => document.getElementById(id);
   const state = {
     rows: [], date: todayJkt(), jenis: 'Semua', akun: 'Semua', onlyProblem: false,
-    loadedAt: null, loading: false, error: null, saving: new Set(), win: null,
+    loadedAt: null, loading: false, error: null, saving: new Set(), win: null, options: {}, fields: null,
   };
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -58,6 +58,9 @@
     return {
       rowNum: r.row, date: r.date, title: r.title, akun: (r.akun || '').trim(), segmen: (r.segmen || '').trim(), jenis: (r.jenis || '').trim(),
       producer: r.producer || '', designer: r.designer || '', editor: r.editor || '', catatan: (r.catatan || '').trim(),
+      production: r.production === 'done',
+      productionMark: r.production || '',
+      f: r.f || {}, // semua field baris ini (key = nama field dari backend, lihat FIELDS di bawah)
       plat: {
         YT: { jam: parseJam(r.jamYT), status: (r.statusYT || '').trim() },
         IG: { jam: parseJam(r.jamIG), status: (r.statusIG || '').trim() },
@@ -83,12 +86,12 @@
     if (p.status === 'Uploaded' || p.status === 'Scheduled') return 'ok';
     return isLate(rec, key) ? 'bad' : 'pend';
   }
+  // Beres / belum ditentukan kolom PRODUCTION (centang = beres).
+  // Yang belum beres dan ada platform lewat jam tayang / Gagal ditandai "Telat".
   function rowHealth(rec) {
-    const hs = PLATS.map(k => platHealth(rec, k)).filter(h => h !== 'na');
-    if (!hs.length) return 'pend';
-    if (hs.includes('bad')) return 'bad';
-    if (hs.includes('pend')) return 'pend';
-    return 'ok';
+    if (rec.production) return 'ok';
+    const late = PLATS.some(k => platHealth(rec, k) === 'bad');
+    return late ? 'bad' : 'pend';
   }
   function filtered(date) {
     return state.rows.filter(r => r.date === date
@@ -115,7 +118,9 @@
   }
 
   function renderWeek() {
-    const w = $('dashWeek'); w.innerHTML = '';
+    const w = $('dashWeek');
+    const prevScroll = w.scrollLeft; // dikosongin = scrollLeft ke-reset ke 0, jadi disimpan dulu
+    w.innerHTML = '';
     const today = todayJkt();
     const start = shiftDate(today, -DAYS_BACK);
     let selEl = null;
@@ -143,38 +148,40 @@
       w.appendChild(b);
     }
     if (selEl && !w.dataset.scrolled) {
+      // Pertama kali dibuka: tengahkan tanggal yang dipilih (biasanya hari ini).
       w.dataset.scrolled = '1';
-      requestAnimationFrame(() => { w.scrollLeft = Math.max(0, selEl.offsetLeft - w.clientWidth / 2 + selEl.offsetWidth / 2); });
+      // Ambil ulang elemennya di sini: strip bisa udah di-render ulang sebelum frame ini jalan.
+      requestAnimationFrame(() => {
+        const cur = w.querySelector('.dash-day.selected'); if (!cur) return;
+        w.scrollLeft = Math.max(0, cur.offsetLeft - w.offsetLeft - w.clientWidth / 2 + cur.offsetWidth / 2);
+      });
+    } else {
+      w.scrollLeft = prevScroll;
     }
   }
 
+  // Ringkasan: satu kartu kecil — Production, Telat, lalu YT/IG/TT (Scheduled+Uploaded / slot).
   function renderSummary(list) {
     const w = $('dashSummary'); w.innerHTML = '';
-    const bad = list.filter(r => rowHealth(r) === 'bad').length;
-    const t = el('div', 'dash-stat' + (bad ? ' alert' : ''));
-    t.appendChild(el('div', 'dash-stat-k', 'Telat / Gagal'));
-    t.appendChild(el('div', 'dash-stat-v', String(bad)));
-    t.appendChild(el('div', 'dash-stat-l', `dari ${list.length} konten`));
-    w.appendChild(t);
+    const card = el('div', 'dash-sum');
+    const item = (k, v, total, cls) => {
+      const it = el('div', 'dash-sum-i' + (cls ? ' ' + cls : ''));
+      it.appendChild(el('span', 'dash-sum-k', k));
+      const val = el('span', 'dash-sum-v', String(v));
+      if (total != null) val.appendChild(el('small', null, '/' + total));
+      it.appendChild(val);
+      card.appendChild(it);
+    };
+    const done = list.filter(r => r.production).length;
+    const late = list.filter(r => rowHealth(r) === 'bad').length;
+    item('Production', done, list.length, list.length && done === list.length ? 'ok' : '');
+    item('Telat', late, null, late ? 'bad' : '');
     PLATS.forEach(k => {
       const slots = list.filter(r => platHealth(r, k) !== 'na');
-      const c = { Uploaded: 0, Scheduled: 0, Acc: 0, Gagal: 0, kosong: 0 };
-      slots.forEach(r => { const s = r.plat[k].status; if (c[s] != null) c[s]++; else c.kosong++; });
-      const n = slots.length || 1;
-      const s = el('div', 'dash-stat');
-      s.appendChild(el('div', 'dash-stat-k', k));
-      const v = el('div', 'dash-stat-v', String(c.Uploaded + c.Scheduled));
-      v.appendChild(el('small', null, `/${slots.length}`));
-      s.appendChild(v);
-      const bar = el('div', 'dash-bar');
-      [['Uploaded', 'up'], ['Scheduled', 'sch'], ['Acc', 'acc'], ['Gagal', 'gagal']].forEach(([key, cl]) => {
-        if (!c[key]) return; const i = el('i', cl); i.style.width = (c[key] / n * 100) + '%'; bar.appendChild(i);
-      });
-      bar.setAttribute('role', 'img');
-      bar.setAttribute('aria-label', `${c.Uploaded} uploaded, ${c.Scheduled} scheduled, ${c.Acc} acc, ${c.Gagal} gagal, ${c.kosong} belum`);
-      s.appendChild(bar);
-      w.appendChild(s);
+      const up = slots.filter(r => r.plat[k].status === 'Uploaded' || r.plat[k].status === 'Scheduled').length;
+      item(k, up, slots.length);
     });
+    w.appendChild(card);
   }
 
   const JENIS_CLS = { 'Video Panjang': 'vpj', 'Video Pendek': 'vpd', 'Desain': 'dsn', 'Foto': 'foto' };
@@ -183,7 +190,12 @@
 
   function rowCard(r) {
     const h = rowHealth(r);
-    const card = el('article', 'card dash-row');
+    const card = el('article', 'card dash-row dash-row-click');
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', 'Lihat detail ' + r.title);
+    card.onclick = (e) => { if (e.target.closest('.dash-plats')) return; openDetail(r.rowNum); };
+    card.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); openDetail(r.rowNum); } };
     const top = el('div', 'dash-row-top');
     const tags = el('div', 'dash-tags');
     if (r.akun) tags.appendChild(el('span', 'tag-badge dash-akun', r.akun));
@@ -192,13 +204,16 @@
     top.appendChild(tags);
     top.appendChild(el('span', 'dash-health ' + h, HEALTH_LABEL[h]));
     card.appendChild(top);
-    card.appendChild(el('h3', 'dash-title', r.title));
-    const crew = [['Producer', r.producer], ['Desainer', r.designer], ['Editor', r.editor]].filter(c => c[1]);
-    if (crew.length) {
-      const c = el('div', 'dash-crew');
-      crew.forEach(([k, v], i) => { if (i) c.appendChild(document.createTextNode(' · ')); c.appendChild(document.createTextNode(k + ' ')); c.appendChild(el('b', null, v)); });
-      card.appendChild(c);
-    }
+    const th = el('div', 'dash-title-row');
+    th.appendChild(el('h3', 'dash-title', r.title));
+    th.appendChild(el('span', 'dash-more', 'Detail ›'));
+    card.appendChild(th);
+    // Baris kecil: crew + status kolom PRODUCTION (✅ / ❌ / — kalau kosong)
+    const prodVal = r.production ? '✅' : (r.productionMark === 'no' ? '❌' : '—');
+    const crew = [['Producer', r.producer], ['Desainer', r.designer], ['Editor', r.editor]].filter(c => c[1]).concat([['Production', prodVal]]);
+    const c = el('div', 'dash-crew');
+    crew.forEach(([k, v], i) => { if (i) c.appendChild(document.createTextNode(' · ')); c.appendChild(document.createTextNode(k + ' ')); c.appendChild(el('b', null, v)); });
+    card.appendChild(c);
     if (r.catatan) card.appendChild(el('div', 'dash-note', r.catatan));
 
     const plats = el('div', 'dash-plats');
@@ -304,13 +319,15 @@
     try {
       const data = await api('GET', { action: 'list', from: win.from, to: win.to });
       state.rows = data.rows.map(toRecord); state.win = win;
+      if (data.options) state.options = data.options;
+      if (Array.isArray(data.fields)) state.fields = data.fields;
       state.loadedAt = new Date(); state.error = null;
       if (manual) toast('Data terbaru udah ditarik.');
     } catch (err) {
       if (err.code === 'UNAUTHORIZED') { state.loading = false; sesiHabisDariSini(); return; }
       state.error = explain(err);
       if (state.loadedAt) toast(state.error.title + '. ' + state.error.body, true);
-    } finally { state.loading = false; if (isPageActive()) render(); }
+    } finally { state.loading = false; if (isPageActive()) render(); if (detail.rowNum != null && !detail.editing) renderSheet(); }
   }
 
   async function saveStatus(rec, plat, value, sel) {
@@ -327,6 +344,254 @@
       if (err.code === 'NETWORK') toast('Nggak yakin status tersimpan. Tap ↻ buat cek.', true);
       else toast('Status nggak tersimpan. ' + (explain(err).title) + '.', true);
     } finally { state.saving.delete(key); if (isPageActive()) render(); }
+  }
+
+
+  // =====================================================================
+  // DETAIL + EDIT KONTEN (panel dari bawah). Kolom = urutan KALENDER KONTEN A..AE.
+  // =====================================================================
+  // k = key field dari backend (dicocokkan ke header KALENDER KONTEN, bukan posisi kolom).
+  const FIELDS = [
+    { k: 'judul',      label: 'Judul konten', type: 'textarea', group: 'Konten', required: true },
+    { k: 'akun',       label: 'Akun',          type: 'select', group: 'Konten' },
+    { k: 'jenis',      label: 'Jenis konten',  type: 'select', group: 'Konten' },
+    { k: 'segmen',     label: 'Segmen',        type: 'select', group: 'Konten' },
+    { k: 'tanggal',    label: 'Tanggal',       type: 'date',   group: 'Jadwal' },
+    { k: 'jamYT',      label: 'Jam up YT',     type: 'select', group: 'Jadwal' },
+    { k: 'jamIG',      label: 'Jam up IG',     type: 'select', group: 'Jadwal' },
+    { k: 'jamTT',      label: 'Jam up TT',     type: 'select', group: 'Jadwal' },
+    { k: 'jamFB',      label: 'Jam up FB',     type: 'select', group: 'Jadwal' },
+    { k: 'producer',   label: 'Producer',      type: 'select', group: 'Tim' },
+    { k: 'writing',    label: 'Writing',       type: 'select', group: 'Tim' },
+    { k: 'shooting',   label: 'Shooting',      type: 'select', group: 'Tim' },
+    { k: 'designer',   label: 'Desainer',      type: 'select', group: 'Tim' },
+    { k: 'editor',     label: 'Editor',        type: 'select', group: 'Tim' },
+    { k: 'talent1',    label: 'Talent 1',      type: 'select', group: 'Tim' },
+    { k: 'talent2',    label: 'Talent 2',      type: 'select', group: 'Tim' },
+    { k: 'production', label: 'Production',    type: 'select', group: 'Tim' },
+    { k: 'statusYT',   label: 'Status YT',     type: 'select', group: 'Status upload' },
+    { k: 'statusIG',   label: 'Status IG',     type: 'select', group: 'Status upload' },
+    { k: 'statusTT',   label: 'Status TT',     type: 'select', group: 'Status upload' },
+    { k: 'statusFB',   label: 'Status FB',     type: 'select', group: 'Status upload' },
+    { k: 'postYT',     label: 'Post ID YT',    type: 'text',   group: 'Post ID' },
+    { k: 'postIG',     label: 'Post ID IG',    type: 'text',   group: 'Post ID' },
+    { k: 'postTT',     label: 'Post ID TT',    type: 'text',   group: 'Post ID' },
+    { k: 'postFB',     label: 'Post ID FB',    type: 'text',   group: 'Post ID' },
+    { k: 'brand',      label: 'Brand tap in',  type: 'select', group: 'Brand' },
+    { k: 'catatan',    label: 'Catatan',       type: 'textarea', group: 'Catatan' },
+    { k: 'eventId',    label: 'Event ID kalender', type: 'readonly', group: 'Lainnya' },
+  ];
+  const GROUPS = ['Konten', 'Jadwal', 'Tim', 'Status upload', 'Post ID', 'Brand', 'Catatan', 'Lainnya'];
+  // Field yang kolomnya udah dihapus dari sheet otomatis gak ditampilin.
+  const activeFields = () => FIELDS.filter(f => !state.fields || f.k === 'tanggal' || state.fields.includes(f.k));
+  const detail = { rowNum: null, editing: false, saving: false };
+
+  const findRec = (rowNum) => state.rows.find(r => r.rowNum === rowNum);
+  const cellOf = (rec, k) => (k === 'tanggal' ? rec.date : String(rec.f[k] == null ? '' : rec.f[k]).trim());
+  const optFor = (k) => state.options[k] || null;
+  const splitMulti = (v) => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
+
+  function ensureSheet() {
+    let wrap = $('dashSheetWrap');
+    if (wrap) return wrap;
+    wrap = el('div', 'dash-sheet-wrap'); wrap.id = 'dashSheetWrap'; wrap.style.display = 'none';
+    wrap.onclick = (e) => { if (e.target === wrap) closeDetail(); };
+    const sh = el('div', 'dash-sheet'); sh.id = 'dashSheet';
+    sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true'); sh.setAttribute('aria-labelledby', 'dashSheetTitle');
+    wrap.appendChild(sh);
+    document.body.appendChild(wrap);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && wrap.style.display !== 'none') closeDetail(); });
+    return wrap;
+  }
+
+  function openDetail(rowNum) {
+    detail.rowNum = rowNum; detail.editing = false;
+    const wrap = ensureSheet();
+    wrap.style.display = 'flex';
+    document.body.classList.add('dash-sheet-open');
+    renderSheet();
+    const sh = $('dashSheet'); sh.scrollTop = 0;
+    setTimeout(() => { const b = sh.querySelector('.dash-sheet-close'); if (b) b.focus(); }, 0);
+  }
+  function closeDetail() {
+    if (detail.saving) return;
+    const wrap = $('dashSheetWrap'); if (wrap) wrap.style.display = 'none';
+    document.body.classList.remove('dash-sheet-open');
+    detail.rowNum = null; detail.editing = false;
+  }
+
+  function sheetHeader(rec, title) {
+    const h = el('div', 'dash-sheet-head');
+    const t = el('div', 'dash-sheet-titles');
+    t.appendChild(el('div', 'home-eyebrow', title));
+    const ttl = el('div', 'dash-sheet-title', rec.title || '(tanpa judul)'); ttl.id = 'dashSheetTitle';
+    t.appendChild(ttl);
+    h.appendChild(t);
+    const x = el('button', 'dash-sheet-close', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Tutup');
+    x.onclick = closeDetail;
+    h.appendChild(x);
+    return h;
+  }
+
+  function displayValue(f, rec) {
+    if (f.k === 'tanggal') { const d = fmtDay(rec.date); return `${d.hari}, ${d.tgl} ${d.bln} ${d.y}`; }
+    return cellOf(rec, f.k);
+  }
+
+  function renderSheet() {
+    const sh = $('dashSheet'); if (!sh) return;
+    const rec = findRec(detail.rowNum);
+    sh.innerHTML = '';
+    if (!rec) { sh.appendChild(el('div', 'loading-text', 'Konten ini udah nggak ada di data terbaru.')); return; }
+    if (detail.editing) return renderEdit(sh, rec);
+
+    sh.appendChild(sheetHeader(rec, 'Detail konten'));
+    const tags = el('div', 'dash-tags dash-sheet-tags');
+    if (rec.akun) tags.appendChild(el('span', 'tag-badge dash-akun', rec.akun));
+    if (rec.jenis) tags.appendChild(el('span', 'tag-badge dash-jenis ' + (JENIS_CLS[rec.jenis] || ''), rec.jenis));
+    const h = rowHealth(rec);
+    tags.appendChild(el('span', 'dash-health ' + h, HEALTH_LABEL[h]));
+    sh.appendChild(tags);
+
+    GROUPS.forEach(g => {
+      const fs = activeFields().filter(f => f.group === g && f.k !== 'judul');
+      if (!fs.length) return;
+      const box = el('section', 'dash-sec');
+      box.appendChild(el('div', 'dash-sec-t', g));
+      const dl = el('dl', 'dash-kv');
+      fs.forEach(f => {
+        const v = displayValue(f, rec);
+        dl.appendChild(el('dt', null, f.label));
+        const dd = el('dd', v ? '' : 'empty');
+        if (v && f.type === 'url' && /^https?:\/\//i.test(v)) {
+          const a = el('a', null, v); a.href = v; a.target = '_blank'; a.rel = 'noopener'; dd.appendChild(a);
+        } else dd.textContent = v || '—';
+        dl.appendChild(dd);
+      });
+      box.appendChild(dl);
+      sh.appendChild(box);
+    });
+
+    const act = el('div', 'dash-sheet-actions');
+    const edit = el('button', 'btn', 'Edit konten'); edit.type = 'button';
+    edit.onclick = () => { detail.editing = true; renderSheet(); $('dashSheet').scrollTop = 0; };
+    act.appendChild(edit);
+    sh.appendChild(act);
+  }
+
+  function fieldControl(f, rec) {
+    const id = `dashF_${f.k}`;
+    const cur = cellOf(rec, f.k);
+    const wrap = el('div', 'dash-field' + (f.type === 'textarea' || (optFor(f.k) && optFor(f.k).multi) ? ' wide' : ''));
+    const lab = el('label', null, f.label + (f.required ? ' *' : '')); lab.htmlFor = id;
+    wrap.appendChild(lab);
+    const opt = optFor(f.k);
+    let ctl;
+    if (f.type === 'readonly') {
+      ctl = el('div', 'dash-ro', cur || '—'); ctl.id = id;
+    } else if (f.type === 'date') {
+      ctl = el('input'); ctl.type = 'date'; ctl.value = rec.date;
+    } else if (f.type === 'textarea') {
+      ctl = el('textarea'); ctl.value = cur; ctl.rows = f.k === 'judul' ? 2 : 3;
+    } else if (f.type === 'select' && opt && opt.multi) {
+      ctl = el('div', 'dash-multi'); ctl.setAttribute('role', 'group'); ctl.setAttribute('aria-label', f.label);
+      const chosen = splitMulti(cur);
+      const all = opt.values.slice(); chosen.forEach(c => { if (!all.includes(c)) all.push(c); });
+      all.forEach(v => {
+        const b = el('button', 'dash-chip', v); b.type = 'button';
+        b.setAttribute('aria-pressed', chosen.includes(v) ? 'true' : 'false');
+        b.onclick = () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+        ctl.appendChild(b);
+      });
+      lab.removeAttribute('for');
+    } else if (f.type === 'select' && opt) {
+      ctl = el('select');
+      const vals = [''].concat(opt.values);
+      const curOpt = vals.find(v => v.trim() === cur);
+      if (cur && curOpt == null) vals.push(cur);
+      vals.forEach(v => { const o = el('option', null, v || '—'); o.value = v; ctl.appendChild(o); });
+      ctl.value = curOpt != null ? curOpt : cur;
+    } else {
+      ctl = el('input'); ctl.type = 'text'; ctl.value = cur;
+    }
+    if (ctl.tagName !== 'DIV') ctl.id = id;
+    ctl.dataset.field = f.k;
+    wrap.appendChild(ctl);
+    return wrap;
+  }
+
+  function readControl(f) {
+    const box = $('dashSheet').querySelector(`[data-field="${f.k}"]`);
+    if (!box) return null;
+    if (box.classList.contains('dash-multi')) {
+      return Array.from(box.querySelectorAll('.dash-chip[aria-pressed="true"]')).map(b => b.textContent).join(', ');
+    }
+    if (box.classList.contains('dash-ro')) return null;
+    return String(box.value == null ? '' : box.value).trim();
+  }
+
+  function renderEdit(sh, rec) {
+    sh.appendChild(sheetHeader(rec, 'Edit konten'));
+    sh.appendChild(el('p', 'dash-sheet-hint', 'Perubahan langsung ketulis ke KALENDER KONTEN setelah kamu tap Simpan.'));
+    const form = el('form', 'dash-form');
+    form.noValidate = true;
+    GROUPS.forEach(g => {
+      const fs = activeFields().filter(f => f.group === g);
+      if (!fs.length) return;
+      const box = el('div', 'dash-sec');
+      box.setAttribute('role', 'group'); box.setAttribute('aria-label', g);
+      box.appendChild(el('div', 'dash-sec-t', g));
+      const grid = el('div', 'dash-fields');
+      fs.forEach(f => grid.appendChild(fieldControl(f, rec)));
+      box.appendChild(grid);
+      form.appendChild(box);
+    });
+    const err = el('div', 'dash-form-err'); err.id = 'dashFormErr'; err.setAttribute('role', 'alert');
+    form.appendChild(err);
+    const act = el('div', 'dash-sheet-actions two');
+    const cancel = el('button', 'btn btn-secondary', 'Batal'); cancel.type = 'button';
+    cancel.onclick = () => { if (detail.saving) return; detail.editing = false; renderSheet(); };
+    const save = el('button', 'btn', 'Simpan'); save.type = 'submit'; save.id = 'dashSaveBtn';
+    act.appendChild(cancel); act.appendChild(save);
+    form.appendChild(act);
+    form.onsubmit = (e) => { e.preventDefault(); saveDetail(rec); };
+    sh.appendChild(form);
+  }
+
+  async function saveDetail(rec) {
+    if (detail.saving) return;
+    const errBox = $('dashFormErr'); errBox.textContent = '';
+    const changes = {};
+    activeFields().forEach(f => {
+      if (f.type === 'readonly') return;
+      const v = readControl(f); if (v == null) return;
+      if (v !== cellOf(rec, f.k)) changes[f.k] = v;
+    });
+    if (changes.judul !== undefined && !changes.judul) { errBox.textContent = 'Judul konten nggak boleh kosong.'; return; }
+    if (changes.tanggal !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(changes.tanggal)) { errBox.textContent = 'Tanggal belum diisi.'; return; }
+    if (!Object.keys(changes).length) { detail.editing = false; renderSheet(); toast('Nggak ada yang berubah.'); return; }
+
+    detail.saving = true;
+    const btn = $('dashSaveBtn'); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    try {
+      const data = await api('POST', { action: 'updateRow', row: rec.rowNum, title: rec.title, date: rec.date, changes });
+      const fresh = toRecord(data.row);
+      const idx = state.rows.findIndex(r => r.rowNum === rec.rowNum);
+      if (idx !== -1) state.rows[idx] = fresh; else state.rows.push(fresh);
+      detail.saving = false; detail.editing = false;
+      if (fresh.date !== state.date) {
+        const d = fmtDay(fresh.date);
+        toast(`Tersimpan. Konten pindah ke ${d.hari}, ${d.tgl} ${d.bln}.`);
+      } else toast('Tersimpan ke KALENDER KONTEN.');
+      render(); renderSheet();
+    } catch (err) {
+      detail.saving = false;
+      if (err.code === 'UNAUTHORIZED') { closeDetail(); sesiHabisDariSini(); return; }
+      if (err.code === 'ROW_MOVED') { errBox.textContent = 'Baris ini udah berubah di sheet (mungkin diedit orang lain). Tutup panel, tap ↻, lalu coba lagi.'; }
+      else if (err.code === 'NETWORK') { errBox.textContent = 'Koneksi putus. Belum pasti tersimpan, cek lagi setelah tap ↻.'; }
+      else errBox.textContent = 'Gagal menyimpan: ' + (err.message || 'error');
+      btn.disabled = false; btn.textContent = 'Simpan';
+    }
   }
 
   // ---------- hook ke app.js ----------

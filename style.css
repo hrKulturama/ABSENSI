@@ -713,21 +713,16 @@
   }
   .dash-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
 
-  /* Ringkasan */
-  .dash-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
-  .dash-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 12px; display: grid; gap: 4px; }
-  .dash-stat-k { font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--ink-soft); }
-  .dash-stat-v { font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-  .dash-stat-v small { font-size: 15px; color: var(--ink-soft); font-weight: 700; }
-  .dash-stat-l { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); }
-  .dash-stat.alert { background: var(--danger-ink); border-color: transparent; }
-  .dash-stat.alert .dash-stat-v { color: var(--danger-text); }
-  .dash-bar { display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
-  .dash-bar i { display: block; height: 100%; }
-  .dash-bar i.up { background: var(--mint-deep); }
-  .dash-bar i.sch { background: var(--blue-deep); }
-  .dash-bar i.acc { background: var(--yellow-deep); }
-  .dash-bar i.gagal { background: var(--danger-deep); }
+  /* Ringkasan — satu kartu kecil */
+  .dash-summary { margin-top: 14px; }
+  .dash-sum { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 4px; }
+  .dash-sum-i { flex: 1; min-width: 0; display: grid; justify-items: center; gap: 1px; padding: 0 4px; }
+  .dash-sum-i + .dash-sum-i { border-left: 1px dashed var(--border); }
+  .dash-sum-k { font-family: var(--font-display); font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
+  .dash-sum-v { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .dash-sum-v small { font-size: 11px; color: var(--ink-soft); }
+  .dash-sum-i.bad .dash-sum-v { color: var(--danger-text); }
+  .dash-sum-i.ok .dash-sum-v { color: var(--mint-text); }
 
   /* Daftar konten */
   .dash-listhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -775,3 +770,50 @@
     padding: 11px 14px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-card);
   }
   .dash-toast.bad { background: var(--danger-deep); }
+
+  /* Kartu konten bisa di-tap buat buka detail */
+  .dash-row-click { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+  .dash-row-click:active { transform: scale(0.99); }
+  .dash-row-click:focus-visible { outline: 2px solid var(--mint-deep); outline-offset: 2px; }
+  .dash-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .dash-more { flex-shrink: 0; font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: var(--ink-soft); padding-top: 3px; white-space: nowrap; }
+
+  /* Panel detail / edit — muncul dari bawah, di atas bottom nav */
+  body.dash-sheet-open { overflow: hidden; }
+  .dash-sheet-wrap { position: fixed; inset: 0; z-index: 150; background: rgba(61,55,80,0.38); display: flex; align-items: flex-end; justify-content: center; }
+  .dash-sheet {
+    width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain;
+    background: var(--bg); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 30px rgba(61,55,80,0.18);
+    padding: 0 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: dashSheetIn 0.24s ease both;
+  }
+  @keyframes dashSheetIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .dash-sheet-head { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 18px 0 10px; border-bottom: var(--dash); }
+  .dash-sheet-titles { min-width: 0; }
+  .dash-sheet-title { font-family: var(--font-display); font-size: 21px; font-weight: 700; line-height: 1.2; color: var(--ink); overflow-wrap: anywhere; }
+  .dash-sheet-close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 700; cursor: pointer; }
+  .dash-sheet-close:focus-visible { outline: 2px solid var(--mint-deep); outline-offset: 2px; }
+  .dash-sheet-tags { margin: 12px 0 4px; align-items: center; }
+  .dash-sheet-hint { font-size: 12px; color: var(--ink-soft); font-weight: 600; margin: 10px 0 2px; }
+
+  .dash-sec { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 10px; min-width: 0; }
+  .dash-sec-t { font-family: var(--font-display); font-size: 12.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; padding: 0; }
+  .dash-kv { display: grid; grid-template-columns: minmax(96px, auto) 1fr; gap: 6px 12px; font-size: 13px; }
+  .dash-kv dt { color: var(--ink-soft); font-weight: 600; }
+  .dash-kv dd { color: var(--ink); font-weight: 700; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
+  .dash-kv dd.empty { color: var(--ink-faint); font-weight: 500; }
+  .dash-kv dd a { color: var(--blue-text); }
+
+  .dash-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+  .dash-field { min-width: 0; }
+  .dash-field.wide { grid-column: 1 / -1; }
+  .dash-field label { display: block; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 4px; }
+  .dash-field input, .dash-field select, .dash-field textarea { padding: 10px; font-size: 15px; margin-bottom: 10px; }
+  .dash-field textarea { min-height: 0; }
+  .dash-ro { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); padding: 4px 0 10px; overflow-wrap: anywhere; }
+  .dash-multi { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .dash-form-err { color: var(--danger-text); font-size: 13px; font-weight: 700; margin-top: 10px; }
+  .dash-form-err:empty { display: none; }
+  .dash-sheet-actions { position: sticky; bottom: calc(-20px - env(safe-area-inset-bottom, 0px)); background: var(--bg); padding: 10px 0 2px; margin-top: 8px; display: grid; gap: 8px; }
+  .dash-sheet-actions.two { grid-template-columns: 1fr 2fr; }
+  .dash-sheet-actions .btn { margin-top: 0; }
