@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121110">
+<title>Kontrol Upload Kulturama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: black brand band with controls, 7-day strip, then a stack of content rows with per-platform status switches */
+:root {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --fg: #16150f;
+  --muted: #6b675a;
+  --line: #e2dfd4;
+  --band: #121110;
+  --band-fg: #f6f5f1;
+  --accent: #ffc131;
+  --accent-ink: #121110;
+  --ok: #1f7a4a; --ok-bg: #dcf1e3;
+  --sched: #1b5fa8; --sched-bg: #dde9f8;
+  --acc: #8a5a00; --acc-bg: #fff0c7;
+  --bad: #b3261e; --bad-bg: #fbe0dd;
+  --none: #8b877a; --none-bg: #efede6;
+  --font-display: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0f0d; --surface: #1a1916; --fg: #f1efe7; --muted: #a29e90; --line: #2d2b26;
+    --band: #000000; --band-fg: #f1efe7;
+    --ok: #6fd39a; --ok-bg: #173325; --sched: #8dbcf2; --sched-bg: #172a40;
+    --acc: #ffcf5c; --acc-bg: #3a2e10; --bad: #ff9a90; --bad-bg: #3d1916;
+    --none: #8f8b7e; --none-bg: #24231f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0f0d; --surface: #1a1916; --fg: #f1efe7; --muted: #a29e90; --line: #2d2b26;
+  --band: #000000; --band-fg: #f1efe7;
+  --ok: #6fd39a; --ok-bg: #173325; --sched: #8dbcf2; --sched-bg: #172a40;
+  --acc: #ffcf5c; --acc-bg: #3a2e10; --bad: #ff9a90; --bad-bg: #3d1916;
+  --none: #8f8b7e; --none-bg: #24231f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--band); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header.band { background: var(--band); color: var(--band-fg); }
+header.band .wrap { padding-block: 20px 18px; display: grid; gap: 16px; }
+.brandrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5vw, 40px); letter-spacing: 0.01em; line-height: 1; text-transform: uppercase; }
+h1 span { color: var(--accent); }
+.sub { margin: 6px 0 0; color: #b9b5a6; font-size: 13px; }
+.sync { font-family: var(--font-mono); font-size: 12px; color: #b9b5a6; display: flex; gap: 10px; align-items: center; }
+.btn { font: 500 13px/1 var(--font-body); border-radius: 6px; border: 1px solid transparent; padding: 9px 12px; cursor: pointer; }
+.btn:focus-visible, select:focus-visible, input:focus-visible, .chip:focus-visible, .day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn-accent { background: var(--accent); color: var(--accent-ink); }
+.btn-accent:hover { filter: brightness(1.06); }
+.btn-ghost { background: transparent; color: var(--band-fg); border-color: #3a3832; }
+.btn-ghost:hover { border-color: var(--accent); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.datebox { display: flex; align-items: center; gap: 6px; }
+.datebox input { font: 500 14px var(--font-mono); background: #1f1e1b; color: var(--band-fg); border: 1px solid #3a3832; border-radius: 6px; padding: 7px 8px; color-scheme: dark; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 12px/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 7px 11px; border: 1px solid #3a3832; background: transparent; color: #cfcab9; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.sep { width: 1px; height: 22px; background: #3a3832; }
+
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.day { text-align: left; background: #1c1b18; border: 1px solid #2e2c27; color: var(--band-fg); border-radius: 8px; padding: 8px 9px; cursor: pointer; display: grid; gap: 4px; min-width: 0; }
+.day[aria-current="date"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.day .dn { font: 500 11px var(--font-mono); color: #a6a293; text-transform: uppercase; letter-spacing: 0.06em; }
+.day .dc { font-family: var(--font-display); font-size: 22px; line-height: 1; }
+.day .dw { font: 500 11px var(--font-mono); }
+.day .dw.bad { color: #ff9a90; } .day .dw.ok { color: #6fd39a; } .day .dw.zero { color: #6f6b5f; }
+
+main .wrap { padding-block: 20px 48px; display: grid; gap: 18px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; }
+.stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.stat .v { font-family: var(--font-display); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--none-bg); }
+.stat .bar i { display: block; height: 100%; }
+.stat .legend { font: 11px var(--font-mono); color: var(--muted); }
+.stat.alert .v { color: var(--bad); }
+
+.listhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.listhead h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.listhead label { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.rows { display: grid; gap: 10px; }
+.row { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 8px; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 18px; }
+.row.st-bad { border-left-color: var(--bad); }
+.row.st-ok { border-left-color: var(--ok); }
+.row.st-pend { border-left-color: var(--accent); }
+.meta { min-width: 0; display: grid; gap: 6px; align-content: start; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag { font: 600 11px/1 var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; background: var(--none-bg); color: var(--fg); }
+.tag.akun { background: var(--band); color: var(--accent); }
+.tag.vpj { background: #f0559f; color: #fff; } .tag.vpd { background: #ff862b; color: #fff; } .tag.dsn { background: #2f8fd6; color: #fff; } .tag.foto { background: #d4edbc; color: #11734b; }
+.title { font-size: 16px; font-weight: 600; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.crew { font-size: 12px; color: var(--muted); }
+.crew b { font-weight: 500; color: var(--fg); }
+.note { font: 12px/1.4 var(--font-mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border-radius: 6px; padding: 7px 9px; }
+.plats { display: grid; grid-template-columns: repeat(3, 132px); gap: 8px; align-content: start; }
+.plat { display: grid; gap: 5px; }
+.plat .pl { display: flex; justify-content: space-between; font: 500 11px var(--font-mono); color: var(--muted); letter-spacing: 0.04em; }
+.plat .pl .late { color: var(--bad); font-weight: 600; }
+.plat select { width: 100%; font: 600 12px var(--font-body); border-radius: 6px; padding: 7px 8px; border: 1px solid transparent; cursor: pointer; appearance: auto; }
+.s-Uploaded { background: var(--ok-bg); color: var(--ok); }
+.s-Scheduled { background: var(--sched-bg); color: var(--sched); }
+.s-Acc { background: var(--acc-bg); color: var(--acc); }
+.s-Gagal { background: var(--bad-bg); color: var(--bad); }
+.s-empty { background: var(--none-bg); color: var(--none); }
+.plat select:disabled { opacity: 0.55; cursor: progress; }
+.plat.na select { opacity: 0.6; }
+
+.empty, .notice { background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 22px; color: var(--muted); text-align: center; }
+.notice.err { border-style: solid; border-color: var(--bad); color: var(--fg); text-align: left; }
+.notice.err strong { color: var(--bad); }
+.skeleton .row { height: 92px; background: linear-gradient(90deg, var(--surface), var(--none-bg), var(--surface)); background-size: 200% 100%; animation: sh 1.4s linear infinite; }
+@keyframes sh { to { background-position: -200% 0; } }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--band); color: var(--band-fg); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 6px; font-size: 13px; max-width: calc(100% - 32px); z-index: 20; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.toast.bad { border-left-color: #ff6b5e; }
+
+@media (max-width: 720px) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .plats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .week { grid-template-columns: repeat(7, minmax(64px, 1fr)); overflow-x: auto; }
+  .weekwrap { overflow-x: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .skeleton .row { animation: none; } }
+
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding-top: env(safe-area-inset-top, 0px); }
+.backlink { color: #b9b5a6; font-size: 12px; text-decoration: none; }
+.backlink:hover { color: var(--accent); }
+.gate { position: fixed; inset: 0; z-index: 30; background: rgba(10,10,9,.72); display: grid; place-items: center; padding: 16px; }
+.gatebox { background: var(--surface); color: var(--fg); border-radius: 10px; border-top: 4px solid var(--accent); padding: 22px; width: min(380px, 100%); display: grid; gap: 10px; }
+.gatebox h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 26px; text-transform: uppercase; }
+.gatebox p { margin: 0; color: var(--muted); font-size: 14px; }
+.gatebox label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.gatebox input { font: 16px var(--font-mono); padding: 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.gatebox .btn { padding: 12px; font-size: 14px; }
+.gatebox .back { font-size: 13px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <div class="brandrow">
+      <div>
+        <h1>Kontrol <span>Upload</span></h1>
+        <p class="sub">Live dari KALENDER KONTEN · DASHBOARD KULTURAMA V1 · <a class="backlink" href="./index.html">← Absensi</a></p>
+      </div>
+      <div class="sync">
+        <span id="syncLabel">Memuat…</span>
+        <button class="btn btn-ghost" id="refreshBtn" type="button">Refresh</button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="datebox">
+        <button class="btn btn-ghost" id="prevDay" type="button" aria-label="Hari sebelumnya">‹</button>
+        <input type="date" id="datePick" aria-label="Tanggal">
+        <button class="btn btn-ghost" id="nextDay" type="button" aria-label="Hari berikutnya">›</button>
+        <button class="btn btn-accent" id="todayBtn" type="button">Hari ini</button>
+      </div>
+      <span class="sep" aria-hidden="true"></span>
+      <div class="chips" id="jenisChips" role="group" aria-label="Jenis konten"></div>
+      <span class="sep" aria-hidden="true"></span>
+      <div class="chips" id="akunChips" role="group" aria-label="Akun"></div>
+    </div>
+    <div class="weekwrap"><div class="week" id="week"></div></div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="summary" id="summary" aria-label="Ringkasan"></section>
+    <section>
+      <div class="listhead">
+        <h2 id="listTitle">Konten</h2>
+        <label for="onlyProblem"><input type="checkbox" id="onlyProblem"> Tampilkan yang belum beres aja</label>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<div class="gate" id="gate" hidden>
+  <form class="gatebox" id="gateForm">
+    <h2>Masukkan kode akses</h2>
+    <p id="gateMsg">Kode akses Kontrol Upload didapat dari admin Kreatif.</p>
+    <label for="gateKey">Kode akses</label>
+    <input type="password" id="gateKey" autocomplete="current-password" required>
+    <button class="btn btn-accent" type="submit">Masuk</button>
+    <a class="back" href="./index.html">← Kembali ke Absensi</a>
+  </form>
+</div>
+
+<script>
+// =====================================================================
+// URL Web App Apps Script KONTROL UPLOAD (project standalone, kode di
+// apps-script/kontrol-upload.gs). Beda dari URL Absensi & Report Kreatif.
+const KONTROL_API_URL = '';
+// =====================================================================
+
+(() => {
+  const STATUS_OPTS = ["Acc", "Scheduled", "Uploaded", "Gagal"];
+  const PLATS = [{ key: "YT" }, { key: "IG" }, { key: "TT" }];
+  const JENIS = ["Semua", "Video Panjang", "Video Pendek", "Desain", "Foto"];
+  const AKUN = ["Semua", "SP", "FP", "NSP"];
+  const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+  const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const WINDOW = 14;
+
+  const $ = (id) => document.getElementById(id);
+  const state = { rows: [], date: todayJkt(), jenis: "Semua", akun: "Semua", onlyProblem: false, loadedAt: null, loading: false, error: null, saving: new Set(), win: null };
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+  try { const s = JSON.parse(lsGet("kontrol_prefs") || "{}"); if (JENIS.includes(s.jenis)) state.jenis = s.jenis; if (AKUN.includes(s.akun)) state.akun = s.akun; state.onlyProblem = !!s.onlyProblem; } catch (e) {}
+  function savePrefs() { lsSet("kontrol_prefs", JSON.stringify({ jenis: state.jenis, akun: state.akun, onlyProblem: state.onlyProblem })); }
+  const getKey = () => lsGet("kontrol_key") || "";
+
+  function todayJkt() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+  function nowJktMinutes() { const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()).split(":").map(Number); return h * 60 + m; }
+  function iso(y, m, d) { return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`; }
+  function parseJam(v) { const s = String(v || "").trim(); if (!s) return null; const m = s.match(/^(\d{1,2})[.:](\d{2})/); if (!m) return { label: s, min: null }; return { label: `${m[1].padStart(2, "0")}.${m[2]}`, min: +m[1] * 60 + +m[2] }; }
+  function shiftDate(isoStr, n) { const [y, m, d] = isoStr.split("-").map(Number); const dt = new Date(Date.UTC(y, m - 1, d + n)); return iso(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()); }
+  function fmtDay(isoStr) { const [y, m, d] = isoStr.split("-").map(Number); const dt = new Date(Date.UTC(y, m - 1, d)); return { hari: HARI[dt.getUTCDay()], tgl: d, bln: BULAN[m - 1], y }; }
+
+  function toRecord(r) {
+    return {
+      rowNum: r.row, date: r.date, title: r.title, akun: (r.akun || "").trim(), segmen: (r.segmen || "").trim(), jenis: (r.jenis || "").trim(),
+      producer: r.producer || "", designer: r.designer || "", editor: r.editor || "", catatan: (r.catatan || "").trim(),
+      plat: {
+        YT: { jam: parseJam(r.jamYT), status: (r.statusYT || "").trim() },
+        IG: { jam: parseJam(r.jamIG), status: (r.statusIG || "").trim() },
+        TT: { jam: parseJam(r.jamTT), status: (r.statusTT || "").trim() },
+      },
+    };
+  }
+
+  function platHealth(rec, key) {
+    const p = rec.plat[key];
+    if (!p.jam && !p.status) return "na";
+    if (p.status === "Gagal") return "bad";
+    if (p.status === "Uploaded" || p.status === "Scheduled") return "ok";
+    if (isLate(rec, key)) return "bad";
+    return "pend";
+  }
+  function isLate(rec, key) {
+    const p = rec.plat[key];
+    if (p.status === "Uploaded" || p.status === "Scheduled" || !p.jam) return false;
+    const today = todayJkt();
+    if (rec.date < today) return true;
+    if (rec.date === today && p.jam.min != null) return nowJktMinutes() > p.jam.min;
+    return false;
+  }
+  function rowHealth(rec) {
+    const hs = PLATS.map(p => platHealth(rec, p.key)).filter(h => h !== "na");
+    if (!hs.length) return "pend";
+    if (hs.includes("bad")) return "bad";
+    if (hs.includes("pend")) return "pend";
+    return "ok";
+  }
+  function filtered(date) {
+    return state.rows.filter(r => r.date === date && (state.jenis === "Semua" || r.jenis === state.jenis) && (state.akun === "Semua" || r.akun === state.akun));
+  }
+
+  // ---------- render ----------
+  function chip(label, on, fn) { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = label; b.setAttribute("aria-pressed", on ? "true" : "false"); b.onclick = fn; return b; }
+  function renderChips() {
+    $("jenisChips").innerHTML = ""; $("akunChips").innerHTML = "";
+    for (const j of JENIS) $("jenisChips").append(chip(j, state.jenis === j, () => { state.jenis = j; savePrefs(); render(); }));
+    for (const a of AKUN) $("akunChips").append(chip(a, state.akun === a, () => { state.akun = a; savePrefs(); render(); }));
+  }
+  function renderWeek() {
+    const el = $("week"); el.innerHTML = "";
+    const start = shiftDate(state.date, -3);
+    for (let i = 0; i < 7; i++) {
+      const d = shiftDate(start, i); const f = fmtDay(d); const list = filtered(d);
+      const bad = list.filter(r => rowHealth(r) === "bad").length;
+      const open = list.filter(r => rowHealth(r) !== "ok").length;
+      const b = document.createElement("button"); b.type = "button"; b.className = "day";
+      if (d === state.date) b.setAttribute("aria-current", "date");
+      const ready = state.loadedAt && inWindow(d);
+      let w, cls;
+      if (!ready) { w = "…"; cls = "zero"; }
+      else if (!list.length) { w = "kosong"; cls = "zero"; }
+      else if (bad) { w = `${bad} telat/gagal`; cls = "bad"; }
+      else if (open) { w = `${open} belum`; cls = ""; }
+      else { w = "beres"; cls = "ok"; }
+      b.innerHTML = `<span class="dn">${f.hari} ${f.tgl} ${f.bln}${d === todayJkt() ? " · hari ini" : ""}</span><span class="dc">${ready ? list.length : "–"}</span><span class="dw ${cls}"></span>`;
+      b.querySelector(".dw").textContent = w;
+      b.onclick = () => setDate(d);
+      el.append(b);
+    }
+  }
+  function renderSummary(list) {
+    const el = $("summary"); el.innerHTML = "";
+    const bad = list.filter(r => rowHealth(r) === "bad").length;
+    const done = list.filter(r => rowHealth(r) === "ok").length;
+    const total = document.createElement("div"); total.className = "stat";
+    total.innerHTML = `<span class="k">Konten</span><span class="v">${list.length}</span><span class="legend">${done} beres · ${list.length - done} belum</span>`;
+    const alert = document.createElement("div"); alert.className = "stat" + (bad ? " alert" : "");
+    alert.innerHTML = `<span class="k">Telat / Gagal</span><span class="v">${bad}</span><span class="legend">lewat jam tayang tanpa Scheduled/Uploaded</span>`;
+    el.append(total, alert);
+    for (const p of PLATS) {
+      const slots = list.filter(r => platHealth(r, p.key) !== "na");
+      const c = { Uploaded: 0, Scheduled: 0, Acc: 0, Gagal: 0, kosong: 0 };
+      for (const r of slots) { const s = r.plat[p.key].status; if (c[s] != null) c[s]++; else c.kosong++; }
+      const n = slots.length || 1;
+      const seg = (v, col) => v ? `<i style="width:${(v / n) * 100}%;background:var(${col})"></i>` : "";
+      const st = document.createElement("div"); st.className = "stat";
+      st.innerHTML = `<span class="k">${p.key}</span><span class="v">${c.Uploaded + c.Scheduled}<span style="font-size:16px;color:var(--muted)">/${slots.length}</span></span>
+        <span class="bar" role="img" aria-label="${c.Uploaded} uploaded, ${c.Scheduled} scheduled, ${c.Acc} acc, ${c.Gagal} gagal, ${c.kosong} kosong">${seg(c.Uploaded, "--ok")}${seg(c.Scheduled, "--sched")}${seg(c.Acc, "--accent")}${seg(c.Gagal, "--bad")}</span>
+        <span class="legend">${c.Uploaded} up · ${c.Scheduled} sch · ${c.Acc} acc${c.Gagal ? ` · ${c.Gagal} gagal` : ""}${c.kosong ? ` · ${c.kosong} kosong` : ""}</span>`;
+      el.append(st);
+    }
+  }
+  const JENIS_CLS = { "Video Panjang": "vpj", "Video Pendek": "vpd", "Desain": "dsn", "Foto": "foto" };
+  function firstJam(r) { const m = PLATS.map(p => r.plat[p.key].jam?.min).filter(v => v != null); return m.length ? Math.min(...m) : 9999; }
+  function renderRows(list) {
+    const el = $("rows"); el.innerHTML = ""; el.classList.remove("skeleton");
+    const f = fmtDay(state.date);
+    $("listTitle").textContent = `Konten ${f.hari}, ${f.tgl} ${f.bln} ${f.y}`;
+    if (state.error && !state.loadedAt) { el.append(errorBox()); return; }
+    if (!state.loadedAt || !inWindow(state.date)) { el.classList.add("skeleton"); for (let i = 0; i < 3; i++) { const d = document.createElement("div"); d.className = "row"; el.append(d); } return; }
+    let shown = state.onlyProblem ? list.filter(r => rowHealth(r) !== "ok") : list;
+    const order = { bad: 0, pend: 1, ok: 2 };
+    shown = [...shown].sort((a, b) => order[rowHealth(a)] - order[rowHealth(b)] || firstJam(a) - firstJam(b));
+    if (!shown.length) {
+      const e = document.createElement("div"); e.className = "empty";
+      e.textContent = list.length ? "Semua konten di tanggal ini udah Scheduled/Uploaded." : "Belum ada konten di KALENDER KONTEN untuk tanggal & filter ini.";
+      el.append(e); return;
+    }
+    for (const r of shown) el.append(rowEl(r));
+  }
+  function tag(t, cls) { const s = document.createElement("span"); s.className = "tag " + cls; s.textContent = t; return s; }
+  function rowEl(r) {
+    const card = document.createElement("article"); card.className = `row st-${rowHealth(r)}`;
+    const meta = document.createElement("div"); meta.className = "meta";
+    const tags = document.createElement("div"); tags.className = "tags";
+    if (r.akun) tags.append(tag(r.akun, "akun"));
+    if (r.jenis) tags.append(tag(r.jenis, JENIS_CLS[r.jenis] || ""));
+    if (r.segmen) tags.append(tag(r.segmen, ""));
+    const title = document.createElement("h3"); title.className = "title"; title.textContent = r.title;
+    meta.append(tags, title);
+    const crew = [["Producer", r.producer], ["Desainer", r.designer], ["Editor", r.editor]].filter(c => c[1]);
+    if (crew.length) { const c = document.createElement("div"); c.className = "crew"; c.innerHTML = crew.map(([k]) => `${k} <b></b>`).join(" · "); c.querySelectorAll("b").forEach((b, i) => b.textContent = crew[i][1]); meta.append(c); }
+    if (r.catatan) { const n = document.createElement("div"); n.className = "note"; n.textContent = r.catatan; meta.append(n); }
+    const plats = document.createElement("div"); plats.className = "plats";
+    for (const p of PLATS) {
+      const pd = r.plat[p.key];
+      const box = document.createElement("div"); box.className = "plat" + (platHealth(r, p.key) === "na" ? " na" : "");
+      const lab = document.createElement("div"); lab.className = "pl";
+      const l1 = document.createElement("span"); l1.textContent = `${p.key}${pd.jam ? " · " + pd.jam.label : ""}`; lab.append(l1);
+      if (isLate(r, p.key)) { const l2 = document.createElement("span"); l2.className = "late"; l2.textContent = "TELAT"; lab.append(l2); }
+      const sel = document.createElement("select");
+      sel.id = `st-${r.rowNum}-${p.key}`;
+      sel.setAttribute("aria-label", `Status ${p.key} untuk ${r.title}`);
+      const opts = ["", ...STATUS_OPTS]; if (pd.status && !opts.includes(pd.status)) opts.push(pd.status);
+      for (const o of opts) { const op = document.createElement("option"); op.value = o; op.textContent = o || (pd.jam ? "Belum" : "—"); sel.append(op); }
+      sel.value = pd.status;
+      sel.className = pd.status && STATUS_OPTS.includes(pd.status) ? `s-${pd.status}` : "s-empty";
+      if (state.saving.has(`${r.rowNum}-${p.key}`)) sel.disabled = true;
+      sel.onchange = () => saveStatus(r, p.key, sel.value, sel);
+      box.append(lab, sel); plats.append(box);
+    }
+    card.append(meta, plats);
+    return card;
+  }
+  function errorBox() {
+    const e = document.createElement("div"); e.className = "notice err";
+    e.innerHTML = `<strong></strong><div class="msg" style="margin-top:6px"></div>`;
+    e.querySelector("strong").textContent = state.error.title; e.querySelector(".msg").textContent = state.error.body;
+    return e;
+  }
+  function renderSync() {
+    const l = $("syncLabel");
+    if (state.loading) l.textContent = "Sinkron…";
+    else if (state.loadedAt) l.textContent = "Update " + new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" }).format(state.loadedAt) + " WIB";
+    else l.textContent = state.error ? "Gagal sinkron" : "Memuat…";
+  }
+  function render() {
+    $("datePick").value = state.date; $("onlyProblem").checked = state.onlyProblem;
+    renderChips(); renderWeek(); renderSync();
+    const list = filtered(state.date);
+    renderSummary(list); renderRows(list);
+  }
+  let toastT;
+  function toast(msg, bad) { const t = $("toast"); t.textContent = msg; t.className = "toast" + (bad ? " bad" : ""); t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3500); }
+
+  // ---------- backend ----------
+  class ApiError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
+  async function api(method, params) {
+    if (!KONTROL_API_URL) throw new ApiError("NO_URL", "URL backend belum diisi");
+    let res;
+    try {
+      if (method === "GET") {
+        const q = new URLSearchParams({ ...params, key: getKey() });
+        res = await fetch(`${KONTROL_API_URL}?${q}`);
+      } else {
+        res = await fetch(KONTROL_API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ ...params, key: getKey() }) });
+      }
+    } catch (e) { throw new ApiError("NETWORK", "Nggak bisa nyambung ke server. Cek internet lo."); }
+    let data; try { data = await res.json(); } catch (e) { throw new ApiError("SERVER_ERROR", "Respons server nggak kebaca."); }
+    if (!data.ok) throw new ApiError(data.code || "SERVER_ERROR", data.message || "Server error");
+    return data;
+  }
+  function explain(err) {
+    switch (err.code) {
+      case "NO_URL": return { title: "Backend belum dipasang", body: "Isi KONTROL_API_URL di kontrol.html dengan URL Web App dari apps-script/kontrol-upload.gs." };
+      case "SETUP": return { title: "Backend belum selesai disetel", body: err.message };
+      case "NETWORK": return { title: "Koneksi putus", body: err.message };
+      default: return { title: "Gagal ambil data", body: err.message };
+    }
+  }
+  function inWindow(d) { return state.win && d >= state.win.from && d <= state.win.to; }
+  function setDate(d) {
+    state.date = d; render();
+    if (!inWindow(shiftDate(d, -3)) || !inWindow(shiftDate(d, 3))) load(false);
+  }
+  async function load(manual) {
+    if (state.loading) return;
+    if (!getKey()) { showGate(); return; }
+    state.loading = true; renderSync();
+    const win = { from: shiftDate(state.date, -WINDOW), to: shiftDate(state.date, WINDOW) };
+    try {
+      const data = await api("GET", { action: "list", from: win.from, to: win.to });
+      state.rows = data.rows.map(toRecord); state.win = win;
+      state.loadedAt = new Date(); state.error = null;
+      if (manual) toast("Data terbaru udah ditarik.");
+    } catch (err) {
+      if (err.code === "UNAUTHORIZED") { lsSet("kontrol_key", null); showGate("Kode akses salah atau udah diganti. Masukkan yang baru."); }
+      else { state.error = explain(err); if (state.loadedAt) toast(state.error.title + ". " + state.error.body, true); }
+    } finally { state.loading = false; render(); }
+  }
+  async function saveStatus(rec, plat, value, sel) {
+    const key = `${rec.rowNum}-${plat}`; const prev = rec.plat[plat].status;
+    state.saving.add(key); sel.disabled = true;
+    try {
+      await api("POST", { action: "setStatus", row: rec.rowNum, platform: plat, value, title: rec.title, date: rec.date });
+      rec.plat[plat].status = value;
+      toast(`${plat} “${rec.title.slice(0, 40)}${rec.title.length > 40 ? "…" : ""}” → ${value || "kosong"}`);
+    } catch (err) {
+      rec.plat[plat].status = prev;
+      if (err.code === "ROW_MOVED") { toast("Baris di sheet udah bergeser. Data di-refresh, coba ubah lagi.", true); state.saving.delete(key); load(false); return; }
+      if (err.code === "UNAUTHORIZED") { lsSet("kontrol_key", null); showGate("Kode akses ditolak. Masukkan lagi."); }
+      else if (err.code === "NETWORK") toast("Nggak yakin status tersimpan. Tekan Refresh buat cek.", true);
+      else toast(`Status nggak tersimpan. ${err.message}`, true);
+    } finally { state.saving.delete(key); render(); }
+  }
+
+  // ---------- gate ----------
+  function showGate(msg) { $("gate").hidden = false; if (msg) $("gateMsg").textContent = msg; setTimeout(() => $("gateKey").focus(), 0); }
+  $("gateForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const k = $("gateKey").value.trim(); if (!k) return;
+    lsSet("kontrol_key", k); $("gateKey").value = ""; $("gate").hidden = true; load(true);
+  });
+
+  // ---------- wiring ----------
+  $("datePick").onchange = (e) => { if (e.target.value) setDate(e.target.value); };
+  $("prevDay").onclick = () => setDate(shiftDate(state.date, -1));
+  $("nextDay").onclick = () => setDate(shiftDate(state.date, 1));
+  $("todayBtn").onclick = () => setDate(todayJkt());
+  $("refreshBtn").onclick = () => load(true);
+  $("onlyProblem").onchange = (e) => { state.onlyProblem = e.target.checked; savePrefs(); render(); };
+
+  render();
+  if (!KONTROL_API_URL) { state.error = explain(new ApiError("NO_URL", "")); render(); }
+  else load(false);
+  setInterval(() => { if (document.visibilityState === "visible" && getKey() && !state.saving.size && KONTROL_API_URL) load(false); }, 180000);
+  setInterval(() => { if (state.loadedAt) render(); }, 60000);
+})();
+</script>
+</body>
+</html>

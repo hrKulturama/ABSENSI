@@ -33,6 +33,8 @@ Endpoint publik `getKaryawan` gak butuh token. Semua endpoint lain butuh token v
 
 Catatan: `kreatif.html` dan bagian dashboard Produksi di `produksi.html` (`APPS_SCRIPT_URL`/`APPS_SCRIPT_URL_DASHBOARD`) manggil project Apps Script **LAIN** (dashboard Kreatif), di luar scope dokumen ini — bukan bagian dari sistem Absensi/Code.js yang dibahas di sini.
 
+Catatan: `kontrol.html` (Kontrol Upload — status upload YT/IG/TT dari tab KALENDER KONTEN, DASHBOARD KULTURAMA V1) manggil project Apps Script **ketiga** yang standalone (`KONTROL_API_URL`, kodenya di `apps-script/kontrol-upload.gs`). Aksesnya pakai kode akses `KONTROL_KEY` di Script Properties, BUKAN token login Absensi. Juga di luar scope dokumen ini.
+
 ## Keputusan: `submitAbsensi` TETAP di Apps Script
 
 Diputuskan 2026-09-22, sadar — bukan kelupaan atau technical debt yang belum sempat dikerjakan.
