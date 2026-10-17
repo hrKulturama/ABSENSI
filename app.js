@@ -129,6 +129,7 @@ function goPage(page) {
   if (page === 'absen') initAbsenPage();
   if (page === 'leaderboard') renderLeaderboard();
   if (page === 'profil') renderProfil();
+  if (page === 'dashboard' && typeof window.renderDashboard === 'function') window.renderDashboard(); // dashboard.js
   window.scrollTo(0, 0);
 }
 
@@ -513,6 +514,9 @@ const MENU_ROLE = {
 };
 
 function terapkanRoleKeUI() {
+  // Tab "Dashboard" (dashboard.js) ikut role juga — dipanggil paling atas biar gak kelewat early-return di bawah.
+  if (typeof window.updateDashboardNav === 'function') window.updateDashboardNav();
+
   const wrap = document.getElementById('roleMenuWrap');
   if (!wrap) return;
 

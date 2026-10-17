@@ -672,3 +672,106 @@
     background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
     padding: 2px 6px; font-family: 'SF Mono', Consolas, Menlo, monospace; font-size: 11px; color: var(--mint-deep);
   }
+
+  /* =====================================================================
+     DASHBOARD KONTEN (Kontrol Upload) — tab "Dashboard", logika di
+     dashboard.js. Semua class diawali .dash- biar gak nabrak yang lain.
+     Warna status ngikut palet pastel: Uploaded = mint, Scheduled = blue,
+     Acc = yellow, Gagal/telat = danger, belum = surface-2.
+     ===================================================================== */
+  #page-dashboard { padding: 32px 16px 18px; }
+  .dash-refresh { border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 20px; font-weight: 700; cursor: pointer; font-family: var(--font-mono); }
+  .dash-refresh:disabled { opacity: 0.5; cursor: progress; }
+
+  /* Chip tanggal — tanggal jadi angka utama, jumlah & status kecil di bawah */
+  .dash-week { gap: 8px; }
+  .dash-day {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    min-width: 74px; padding: 9px 6px 8px; border-radius: 18px; flex-shrink: 0;
+    background: var(--surface); border: 1.5px solid var(--border); color: var(--ink);
+    font-family: var(--font-body); cursor: pointer; transition: all 0.2s;
+  }
+  .dash-day-name { font-size: 9.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  .dash-day-num { font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; }
+  .dash-day-count { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); }
+  .dash-day-st { font-family: var(--font-mono); font-size: 10px; font-weight: 700; }
+  .dash-day-st.bad { color: var(--danger-text); }
+  .dash-day-st.pend { color: var(--yellow-text); }
+  .dash-day-st.ok { color: var(--mint-text); }
+  .dash-day.today .dash-day-name { color: var(--mint-text); }
+  .dash-day.selected { background: var(--mint); border-color: var(--mint); box-shadow: 0 3px 0 rgba(0,0,0,0.12); transform: translateY(-2px); }
+  .dash-day.selected .dash-day-name, .dash-day.selected .dash-day-num, .dash-day.selected .dash-day-count { color: var(--mint-text); }
+
+  /* Filter */
+  .dash-filters { display: grid; gap: 8px; margin-top: 6px; }
+  .dash-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .dash-chips::-webkit-scrollbar { display: none; }
+  .dash-chip {
+    flex-shrink: 0; padding: 7px 12px; border-radius: var(--radius-tag);
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-soft);
+    font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .dash-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+
+  /* Ringkasan */
+  .dash-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+  .dash-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 12px; display: grid; gap: 4px; }
+  .dash-stat-k { font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--ink-soft); }
+  .dash-stat-v { font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .dash-stat-v small { font-size: 15px; color: var(--ink-soft); font-weight: 700; }
+  .dash-stat-l { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); }
+  .dash-stat.alert { background: var(--danger-ink); border-color: transparent; }
+  .dash-stat.alert .dash-stat-v { color: var(--danger-text); }
+  .dash-bar { display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+  .dash-bar i { display: block; height: 100%; }
+  .dash-bar i.up { background: var(--mint-deep); }
+  .dash-bar i.sch { background: var(--blue-deep); }
+  .dash-bar i.acc { background: var(--yellow-deep); }
+  .dash-bar i.gagal { background: var(--danger-deep); }
+
+  /* Daftar konten */
+  .dash-listhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .dash-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+  .dash-toggle input { width: auto; margin: 0; padding: 0; accent-color: var(--mint-deep); }
+  .dash-row { margin-bottom: 10px; display: grid; gap: 8px; }
+  .dash-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .dash-tags { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+  .dash-tags .tag-badge { padding: 2px 8px; font-size: 9.5px; }
+  .tag-badge.dash-akun { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .tag-badge.dash-jenis.vpj { background: var(--pink-ink); color: var(--pink-text); }
+  .tag-badge.dash-jenis.vpd { background: var(--coral-ink); color: var(--coral-text); }
+  .tag-badge.dash-jenis.dsn { background: var(--blue-ink); color: var(--blue-text); }
+  .tag-badge.dash-jenis.foto { background: var(--mint-ink); color: var(--mint-text); }
+  .tag-badge.dash-seg { background: var(--surface-2); color: var(--ink-soft); }
+  .dash-health { flex-shrink: 0; font-family: var(--font-display); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 10px; border-radius: var(--radius-tag); }
+  .dash-health.bad { background: var(--danger); color: #fff; }
+  .dash-health.pend { background: var(--yellow); color: var(--yellow-text); }
+  .dash-health.ok { background: var(--mint); color: var(--mint-text); }
+  .dash-title { font-family: var(--font-body); font-size: 15px; font-weight: 800; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
+  .dash-crew { font-size: 11.5px; color: var(--ink-soft); font-weight: 500; }
+  .dash-crew b { color: var(--ink); font-weight: 700; }
+  .dash-note { font-family: var(--font-mono); font-size: 11px; line-height: 1.45; color: var(--ink-soft); background: var(--surface-2); border-radius: 10px; padding: 7px 9px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .dash-plats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; border-top: var(--dash); padding-top: 10px; margin-top: 2px; }
+  .dash-plat { display: grid; gap: 4px; min-width: 0; }
+  .dash-plat-l { display: flex; justify-content: space-between; gap: 4px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); white-space: nowrap; }
+  .dash-plat-l .late { color: var(--danger-text); font-weight: 700; }
+  .dash-sel { margin: 0; padding: 8px 6px; font-size: 13px; font-weight: 700; border-radius: 10px; border: 1.5px solid transparent; cursor: pointer; }
+  .dash-sel.s-uploaded { background: var(--mint-ink); color: var(--mint-text); border-color: var(--mint); }
+  .dash-sel.s-scheduled { background: var(--blue-ink); color: var(--blue-text); border-color: var(--blue); }
+  .dash-sel.s-acc { background: var(--yellow-ink); color: var(--yellow-text); border-color: var(--yellow); }
+  .dash-sel.s-gagal { background: var(--danger-ink); color: var(--danger-text); border-color: var(--danger); }
+  .dash-sel.s-empty { background: var(--surface-2); color: var(--ink-soft); border-color: var(--border); }
+  .dash-sel:disabled { opacity: 0.55; cursor: progress; }
+  .dash-plat.na .dash-sel { opacity: 0.6; }
+  .dash-msg { display: grid; gap: 6px; font-size: 13px; }
+  .dash-msg.err b { color: var(--danger-text); font-family: var(--font-display); font-size: 15px; }
+  .dash-empty { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+
+  .dash-toast {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(var(--nav-h) + 28px); z-index: 120;
+    width: calc(100% - 40px); max-width: 360px;
+    background: var(--ink); color: var(--surface); border-radius: var(--radius-sm);
+    padding: 11px 14px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-card);
+  }
+  .dash-toast.bad { background: var(--danger-deep); }
