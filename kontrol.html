@@ -197,20 +197,20 @@ body { margin: 0; padding-top: env(safe-area-inset-top, 0px); }
 <div class="toast" id="toast" hidden></div>
 
 <div class="gate" id="gate" hidden>
-  <form class="gatebox" id="gateForm">
-    <h2>Masukkan kode akses</h2>
-    <p id="gateMsg">Kode akses Kontrol Upload didapat dari admin Kreatif.</p>
-    <label for="gateKey">Kode akses</label>
-    <input type="password" id="gateKey" autocomplete="current-password" required>
-    <button class="btn btn-accent" type="submit">Masuk</button>
-    <a class="back" href="./index.html">← Kembali ke Absensi</a>
-  </form>
+  <div class="gatebox" role="dialog" aria-labelledby="gateTitle">
+    <h2 id="gateTitle">Login dulu</h2>
+    <p id="gateMsg">Kontrol Upload pakai akun Absensi kamu. Masuk di app Absensi, lalu buka halaman ini lagi.</p>
+    <a class="btn btn-accent" href="./index.html" style="text-align:center;text-decoration:none">Buka app Absensi</a>
+    <button class="btn" type="button" id="gateRetry" style="background:var(--none-bg);color:var(--fg)">Udah login, coba lagi</button>
+  </div>
 </div>
 
 <script>
 // =====================================================================
 // URL Web App Apps Script KONTROL UPLOAD (project standalone, kode di
 // apps-script/kontrol-upload.gs). Beda dari URL Absensi & Report Kreatif.
+// Auth pakai token login Absensi (localStorage 'absensi_token'), role
+// kreatif / hr / admin — sama seperti kreatif.html.
 const KONTROL_API_URL = '';
 // =====================================================================
 
@@ -230,7 +230,7 @@ const KONTROL_API_URL = '';
   function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
   try { const s = JSON.parse(lsGet("kontrol_prefs") || "{}"); if (JENIS.includes(s.jenis)) state.jenis = s.jenis; if (AKUN.includes(s.akun)) state.akun = s.akun; state.onlyProblem = !!s.onlyProblem; } catch (e) {}
   function savePrefs() { lsSet("kontrol_prefs", JSON.stringify({ jenis: state.jenis, akun: state.akun, onlyProblem: state.onlyProblem })); }
-  const getKey = () => lsGet("kontrol_key") || "";
+  const getToken = () => lsGet("absensi_token") || "";
 
   function todayJkt() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
   function nowJktMinutes() { const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()).split(":").map(Number); return h * 60 + m; }
@@ -409,10 +409,10 @@ const KONTROL_API_URL = '';
     let res;
     try {
       if (method === "GET") {
-        const q = new URLSearchParams({ ...params, key: getKey() });
+        const q = new URLSearchParams({ ...params, token: getToken() });
         res = await fetch(`${KONTROL_API_URL}?${q}`);
       } else {
-        res = await fetch(KONTROL_API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ ...params, key: getKey() }) });
+        res = await fetch(KONTROL_API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ ...params, token: getToken() }) });
       }
     } catch (e) { throw new ApiError("NETWORK", "Nggak bisa nyambung ke server. Cek internet lo."); }
     let data; try { data = await res.json(); } catch (e) { throw new ApiError("SERVER_ERROR", "Respons server nggak kebaca."); }
@@ -423,6 +423,7 @@ const KONTROL_API_URL = '';
     switch (err.code) {
       case "NO_URL": return { title: "Backend belum dipasang", body: "Isi KONTROL_API_URL di kontrol.html dengan URL Web App dari apps-script/kontrol-upload.gs." };
       case "SETUP": return { title: "Backend belum selesai disetel", body: err.message };
+      case "FORBIDDEN": return { title: "Akun kamu nggak punya akses", body: "Kontrol Upload cuma buat role Kreatif, HR, dan admin." };
       case "NETWORK": return { title: "Koneksi putus", body: err.message };
       default: return { title: "Gagal ambil data", body: err.message };
     }
@@ -434,7 +435,7 @@ const KONTROL_API_URL = '';
   }
   async function load(manual) {
     if (state.loading) return;
-    if (!getKey()) { showGate(); return; }
+    if (!getToken()) { showGate(); return; }
     state.loading = true; renderSync();
     const win = { from: shiftDate(state.date, -WINDOW), to: shiftDate(state.date, WINDOW) };
     try {
@@ -443,7 +444,7 @@ const KONTROL_API_URL = '';
       state.loadedAt = new Date(); state.error = null;
       if (manual) toast("Data terbaru udah ditarik.");
     } catch (err) {
-      if (err.code === "UNAUTHORIZED") { lsSet("kontrol_key", null); showGate("Kode akses salah atau udah diganti. Masukkan yang baru."); }
+      if (err.code === "UNAUTHORIZED") showGate("Sesi login kamu udah habis. Masuk lagi di app Absensi, lalu balik ke sini.");
       else { state.error = explain(err); if (state.loadedAt) toast(state.error.title + ". " + state.error.body, true); }
     } finally { state.loading = false; render(); }
   }
@@ -457,19 +458,15 @@ const KONTROL_API_URL = '';
     } catch (err) {
       rec.plat[plat].status = prev;
       if (err.code === "ROW_MOVED") { toast("Baris di sheet udah bergeser. Data di-refresh, coba ubah lagi.", true); state.saving.delete(key); load(false); return; }
-      if (err.code === "UNAUTHORIZED") { lsSet("kontrol_key", null); showGate("Kode akses ditolak. Masukkan lagi."); }
+      if (err.code === "UNAUTHORIZED") showGate("Sesi login kamu udah habis. Masuk lagi di app Absensi, lalu balik ke sini.");
       else if (err.code === "NETWORK") toast("Nggak yakin status tersimpan. Tekan Refresh buat cek.", true);
       else toast(`Status nggak tersimpan. ${err.message}`, true);
     } finally { state.saving.delete(key); render(); }
   }
 
   // ---------- gate ----------
-  function showGate(msg) { $("gate").hidden = false; if (msg) $("gateMsg").textContent = msg; setTimeout(() => $("gateKey").focus(), 0); }
-  $("gateForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const k = $("gateKey").value.trim(); if (!k) return;
-    lsSet("kontrol_key", k); $("gateKey").value = ""; $("gate").hidden = true; load(true);
-  });
+  function showGate(msg) { $("gate").hidden = false; if (msg) $("gateMsg").textContent = msg; setTimeout(() => $("gateRetry").focus(), 0); }
+  $("gateRetry").onclick = () => { $("gate").hidden = true; load(true); };
 
   // ---------- wiring ----------
   $("datePick").onchange = (e) => { if (e.target.value) setDate(e.target.value); };
@@ -482,7 +479,7 @@ const KONTROL_API_URL = '';
   render();
   if (!KONTROL_API_URL) { state.error = explain(new ApiError("NO_URL", "")); render(); }
   else load(false);
-  setInterval(() => { if (document.visibilityState === "visible" && getKey() && !state.saving.size && KONTROL_API_URL) load(false); }, 180000);
+  setInterval(() => { if (document.visibilityState === "visible" && getToken() && !state.saving.size && KONTROL_API_URL) load(false); }, 180000);
   setInterval(() => { if (state.loadedAt) render(); }, 60000);
 })();
 </script>
