@@ -29,7 +29,7 @@
   const $ = (id) => document.getElementById(id);
   const state = {
     rows: [], date: todayJkt(), jenis: 'Semua', akun: 'Semua', onlyProblem: false,
-    loadedAt: null, loading: false, error: null, saving: new Set(), win: null, options: {}, fields: null,
+    loadedAt: null, loading: false, error: null, saving: new Set(), win: null, options: {}, fields: null, backendOld: false,
   };
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -60,7 +60,12 @@
       producer: r.producer || '', designer: r.designer || '', editor: r.editor || '', catatan: (r.catatan || '').trim(),
       production: r.production === 'done',
       productionMark: r.production || '',
-      f: r.f || {}, // semua field baris ini (key = nama field dari backend, lihat FIELDS di bawah)
+      // semua field baris ini (key = nama field dari backend, lihat FIELDS di bawah).
+      // Backend versi lama belum ngirim `f` — isi dari field yang ada biar detail gak kosong.
+      f: r.f || { judul: r.title || '', akun: r.akun || '', segmen: r.segmen || '', jenis: r.jenis || '',
+        jamYT: r.jamYT || '', jamIG: r.jamIG || '', jamTT: r.jamTT || '', producer: r.producer || '',
+        designer: r.designer || '', editor: r.editor || '', statusYT: r.statusYT || '', statusIG: r.statusIG || '',
+        statusTT: r.statusTT || '', catatan: r.catatan || '' },
       plat: {
         YT: { jam: parseJam(r.jamYT), status: (r.statusYT || '').trim() },
         IG: { jam: parseJam(r.jamIG), status: (r.statusIG || '').trim() },
@@ -320,7 +325,12 @@
       const data = await api('GET', { action: 'list', from: win.from, to: win.to });
       state.rows = data.rows.map(toRecord); state.win = win;
       if (data.options) state.options = data.options;
-      if (Array.isArray(data.fields)) state.fields = data.fields;
+      if (Array.isArray(data.fields)) { state.fields = data.fields; state.backendOld = false; }
+      else if (!state.backendOld) {
+        // Apps Script belum di-deploy versi baru (gak ada daftar field / fitur edit).
+        state.backendOld = true;
+        toast('Backend Apps Script masih versi lama. Detail belum lengkap & edit belum bisa sampai di-deploy ulang.', true);
+      }
       state.loadedAt = new Date(); state.error = null;
       if (manual) toast('Data terbaru udah ditarik.');
     } catch (err) {
@@ -472,6 +482,10 @@
       sh.appendChild(box);
     });
 
+    if (state.backendOld) {
+      sh.appendChild(el('p', 'dash-sheet-hint warn', 'Backend Apps Script masih versi lama, jadi detail belum lengkap dan konten belum bisa diedit. Deploy versi baru Apps Script Kontrol Upload dulu.'));
+      return;
+    }
     const act = el('div', 'dash-sheet-actions');
     const edit = el('button', 'btn', 'Edit konten'); edit.type = 'button';
     edit.onclick = () => { detail.editing = true; renderSheet(); $('dashSheet').scrollTop = 0; };
