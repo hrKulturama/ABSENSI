@@ -2217,6 +2217,70 @@ async function hrResetPinKaryawan(nama) {
   }
 }
 
+// Tambah karyawan = 1 baris baru di sheet KARYAWAN (PIN kosong, orangnya
+// daftar PIN sendiri). Nama dirapikan + dikapitalkan di server. Kalau nama itu
+// punya riwayat lama di DATABASE/GAJI, server balikin code RIWAYAT_ADA dan
+// HR wajib konfirmasi dulu (riwayat itu bakal nyambung ke karyawan ini).
+async function hrTambahKaryawan(konfirmasiRiwayat) {
+  const namaEl = document.getElementById('hrTambahNama');
+  const roleEl = document.getElementById('hrTambahRole');
+  const btn = document.getElementById('hrTambahBtn');
+  const statusBox = document.getElementById('hrTambahStatusBox');
+  const nama = namaEl.value.trim();
+  const role = roleEl.value;
+
+  statusBox.innerHTML = '';
+  if (!nama) { statusBox.innerHTML = '<div class="status-box status-fail">Nama wajib diisi.</div>'; return; }
+  if (!role) { statusBox.innerHTML = '<div class="status-box status-fail">Pilih role dulu.</div>'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  try {
+    const res = await fetch(VERCEL_BACKEND_URL + '/hr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'tambahKaryawan', token: tokenHR(), nama, role, konfirmasiRiwayat: konfirmasiRiwayat === true })
+    });
+    const data = await res.json();
+
+    if (data.result !== 'success') {
+      if (data.code === 'UNAUTHORIZED' || data.message === 'Unauthorized') {
+        hrHandleUnauthorized(statusBox);
+        return;
+      }
+      if (data.code === 'RIWAYAT_ADA') {
+        const lanjut = confirm(
+          (data.message || 'Nama ini sudah punya riwayat lama.') + '\n\n' +
+          'Lanjutkan HANYA kalau ini memang orang yang sama dengan pemilik riwayat itu. ' +
+          'Kalau ini orang baru yang kebetulan namanya sama, batalkan lalu bedakan namanya (mis. tambah nama belakang).'
+        );
+        if (lanjut) return await hrTambahKaryawan(true); // await: biar finally di sini gak nyalain tombol duluan
+        return;
+      }
+      statusBox.innerHTML = '<div class="status-box status-fail">⚠️ ' + escapeHtml(data.message || 'Gagal menambah karyawan.') + '</div>';
+      return;
+    }
+
+    namaEl.value = '';
+    roleEl.value = '';
+    // Sama kayak hapus: daftar nama, leaderboard, rekap turunan sheet KARYAWAN.
+    daftarNamaCache = null;
+    leaderboardCache = null;
+    leaderboardCacheTime = 0;
+    hrRekapCache = [];
+    hrTodayCache = [];
+
+    await hrLoadKaryawanList();
+    statusBox.innerHTML = '<div class="status-box status-ok">✅ ' + escapeHtml(data.message || 'Karyawan ditambahkan.') + '</div>';
+  } catch (e) {
+    statusBox.innerHTML = '<div class="status-box status-fail">⚠️ Gagal koneksi ke server.</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Tambah';
+  }
+}
+
 // Hapus karyawan = cuma baris di sheet KARYAWAN. DATABASE/SKOR/GAJI gak
 // disentuh server, jadi riwayatnya tetap ada. Validasi beneran (token HR,
 // bukan diri sendiri, bukan hr terakhir, nama cocok) ada di server.

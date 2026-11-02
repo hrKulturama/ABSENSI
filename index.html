@@ -429,7 +429,7 @@
 
     <div class="card" id="hrCardBulanan">
       <div class="card-title">🗓️ Rekap Bulanan
-        <span class="muted"><button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToKaryawan()">🔑 Kelola PIN</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToPayroll()">💰 Payroll</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrHitungUlangSemuaSkor(this)">🔄 Hitung Ulang Skor</button></span>
+        <span class="muted"><button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToKaryawan()">🔑 Kelola Karyawan</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrGoToPayroll()">💰 Payroll</button> <button class="hr-exit-btn" style="font-size:12.5px" onclick="hrHitungUlangSemuaSkor(this)">🔄 Hitung Ulang Skor</button></span>
       </div>
       <div class="hr-filter-row">
         <select id="hrFilterBulan"></select>
@@ -520,11 +520,27 @@
   <div class="page" id="page-hr-karyawan">
     <div class="hr-top-bar">
       <div class="hr-back-btn" onclick="hrBackToHome()">←</div>
-      <h1>Kelola PIN</h1>
+      <h1>Kelola Karyawan</h1>
     </div>
     <p class="info-text" style="margin-top:-8px; margin-bottom:14px; text-align:left">
       Reset PIN dipakai kalau ada yang lupa PIN atau ganti HP. Setelah direset, orang itu perlu daftar ulang PIN baru dari awal.
     </p>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">➕ Tambah Karyawan</div>
+      <input type="text" id="hrTambahNama" placeholder="Nama karyawan" maxlength="60" autocomplete="off">
+      <select id="hrTambahRole">
+        <option value="">— Pilih role —</option>
+        <option value="produksi">produksi</option>
+        <option value="kreatif">kreatif</option>
+        <option value="manager">manager</option>
+        <option value="markom">markom</option>
+        <option value="hr">hr</option>
+        <option value="admin">admin (superuser eksternal, tidak ikut absen)</option>
+      </select>
+      <button class="btn" id="hrTambahBtn" onclick="hrTambahKaryawan()">Tambah</button>
+      <div id="hrTambahStatusBox"></div>
+    </div>
 
     <div class="card">
       <input type="text" class="hr-kr-search" id="hrKrSearch" placeholder="Cari nama…" oninput="hrRenderKaryawanList()">

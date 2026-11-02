@@ -23,6 +23,7 @@ Dokumen ini isinya status backend TIAP endpoint yang dipanggil app ini (`app.js`
 | `simpanLaporanTemplate` | Vercel (`/api/hr`, POST) | Ada, kode lengkap (bukan stub) — belum ada tes live baru hari ini (POST tersimpan, resiko nulis CONFIG asli kalau dites sembarangan). Sudah pernah dites simpan+baca sukses saat Tahap 4 | 2026-09-14 (Tahap 4) |
 | `hitungUlangSemuaSkor` | Vercel (`/api/hr`, POST) | Ada, kode lengkap (bukan stub) — belum dites ulang hari ini (POST ini menulis ulang seluruh sheet SKOR, sengaja gak diulang tanpa alasan). Sudah pernah dites identik 100% dengan data asli semua karyawan saat Tahap 4 | 2026-09-14 (Tahap 4) |
 | `resetPin` | Vercel (`/api/hr`, POST) | Ada, kode lengkap secara struktur (pola sama persis dengan `simpanPinHash` yang sudah tervalidasi di `daftar`) — **TAPI belum pernah dites reset PIN beneran secara live** (cuma jalur error yang pernah dites). Resiko dianggap rendah tapi belum diverifikasi penuh | belum pernah (code review only) |
+| `tambahKaryawan` | Vercel (`/api/hr`, POST) — **endpoint baru**, tidak pernah ada di Apps Script | Lengkap & terverifikasi live (deployment `dpl_DvvXY9K7nnGFdoF3StkJkbenLYYU`) pakai baris fiktif: tanpa token / token palsu → UNAUTHORIZED; tambah berhasil (nama dirapikan + dikapitalkan, PIN kosong, langsung bisa `daftar` lewat Apps Script); duplikat, role tidak valid, karakter aneh, nama kosong → ditolak; nama dengan riwayat lama → `RIWAYAT_ADA` tanpa menulis apa pun. Jalur `konfirmasiRiwayat: true` memakai fungsi tulis yang sama dengan tambah biasa — tidak dites live karena berarti menambahkan ulang karyawan asli | 2026-11-02 |
 | `hapusKaryawan` | Vercel (`/api/hr`, POST) — **endpoint baru**, tidak pernah ada di Apps Script | Lengkap & terverifikasi live (deployment `dpl_D42qSPkMx22DT7DRsopkrd1b2iXm`) pakai baris fiktif `TES HAPUS KARYAWAN`: tanpa token / token palsu / token milik orang yang sudah dihapus → UNAUTHORIZED; nama tidak ada → error jelas; hapus diri sendiri → ditolak; hapus berhasil (nama dicocokkan trim + case-insensitive). Tolak-hapus-hr-terakhir & pengaman baris-bergeser dites lewat dry-run lokal pakai data sheet asli (fungsi hapus di-stub) — sengaja TIDAK dites live karena harus menyasar HR asli. Lihat catatan di bawah | 2026-11-02 |
 | `getSlipGajiPdf` | Vercel | Lengkap & terverifikasi — auth konsisten dengan Apps Script; render PDF sudah dites match dengan `getPayroll` saat Tahap 4 | 2026-09-22 |
 | `daftar` | Apps Script (`SCRIPT_URL`) | Lengkap — tidak pernah masuk scope migrasi | — |
@@ -31,6 +32,14 @@ Dokumen ini isinya status backend TIAP endpoint yang dipanggil app ini (`app.js`
 | `submitAbsensi` | **Apps Script (`SCRIPT_URL`)** — sengaja TETAP di sini, lihat keputusan di bawah | Lengkap (sistem lama, sudah bertahun-tahun jalan) | — |
 
 Endpoint publik `getKaryawan` gak butuh token. Semua endpoint lain butuh token valid (hasil `login`/`hrLogin`) — sudah dicek: token tidak valid ditolak dengan pesan `UNAUTHORIZED` yang identik di Apps Script maupun Vercel, jadi tidak ada endpoint yang diam-diam menerima request tanpa otentikasi.
+
+## Catatan `tambahKaryawan`
+
+- Menambah 1 baris di `KARYAWAN`: Nama | Role | PIN kosong (kolom A–C saja). Karyawan lalu daftar PIN sendiri lewat alur `daftar` biasa (Apps Script).
+- Nama dirapikan di server: spasi ganda jadi satu, trim, huruf kapital. Hanya huruf, angka, spasi, `.`, `'`, `-` yang diterima (maks 60 karakter). Role wajib salah satu dari: hr, kreatif, produksi, manager, markom, admin (admin sengaja boleh — keputusan 2026-11-02).
+- Nama yang sudah ada (dicocokkan `normalNama`) ditolak.
+- Kalau nama punya jejak di `DATABASE` (kolom B) atau `GAJI` (kolom A), server balikin `code: 'RIWAYAT_ADA'` dan TIDAK menulis apa pun; frontend minta konfirmasi HR, lalu kirim ulang dengan `konfirmasiRiwayat: true`. Tujuannya biar orang baru yang kebetulan bernama sama tidak diam-diam mewarisi riwayat orang lain.
+- Sisa resiko: dua HR menambah nama yang sama di detik yang sama bisa menghasilkan baris dobel (cek duplikat & append tidak dikunci). Dianggap dapat diterima untuk volume pemakaian sekarang.
 
 ## Catatan `hapusKaryawan`
 
