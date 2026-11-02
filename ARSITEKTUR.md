@@ -23,6 +23,7 @@ Dokumen ini isinya status backend TIAP endpoint yang dipanggil app ini (`app.js`
 | `simpanLaporanTemplate` | Vercel (`/api/hr`, POST) | Ada, kode lengkap (bukan stub) — belum ada tes live baru hari ini (POST tersimpan, resiko nulis CONFIG asli kalau dites sembarangan). Sudah pernah dites simpan+baca sukses saat Tahap 4 | 2026-09-14 (Tahap 4) |
 | `hitungUlangSemuaSkor` | Vercel (`/api/hr`, POST) | Ada, kode lengkap (bukan stub) — belum dites ulang hari ini (POST ini menulis ulang seluruh sheet SKOR, sengaja gak diulang tanpa alasan). Sudah pernah dites identik 100% dengan data asli semua karyawan saat Tahap 4 | 2026-09-14 (Tahap 4) |
 | `resetPin` | Vercel (`/api/hr`, POST) | Ada, kode lengkap secara struktur (pola sama persis dengan `simpanPinHash` yang sudah tervalidasi di `daftar`) — **TAPI belum pernah dites reset PIN beneran secara live** (cuma jalur error yang pernah dites). Resiko dianggap rendah tapi belum diverifikasi penuh | belum pernah (code review only) |
+| `hapusKaryawan` | Vercel (`/api/hr`, POST) — **endpoint baru**, tidak pernah ada di Apps Script | Lengkap & terverifikasi live (deployment `dpl_D42qSPkMx22DT7DRsopkrd1b2iXm`) pakai baris fiktif `TES HAPUS KARYAWAN`: tanpa token / token palsu / token milik orang yang sudah dihapus → UNAUTHORIZED; nama tidak ada → error jelas; hapus diri sendiri → ditolak; hapus berhasil (nama dicocokkan trim + case-insensitive). Tolak-hapus-hr-terakhir & pengaman baris-bergeser dites lewat dry-run lokal pakai data sheet asli (fungsi hapus di-stub) — sengaja TIDAK dites live karena harus menyasar HR asli. Lihat catatan di bawah | 2026-11-02 |
 | `getSlipGajiPdf` | Vercel | Lengkap & terverifikasi — auth konsisten dengan Apps Script; render PDF sudah dites match dengan `getPayroll` saat Tahap 4 | 2026-09-22 |
 | `daftar` | Apps Script (`SCRIPT_URL`) | Lengkap — tidak pernah masuk scope migrasi | — |
 | `login` | Apps Script (`SCRIPT_URL`) | Lengkap — tidak pernah masuk scope migrasi | — |
@@ -30,6 +31,14 @@ Dokumen ini isinya status backend TIAP endpoint yang dipanggil app ini (`app.js`
 | `submitAbsensi` | **Apps Script (`SCRIPT_URL`)** — sengaja TETAP di sini, lihat keputusan di bawah | Lengkap (sistem lama, sudah bertahun-tahun jalan) | — |
 
 Endpoint publik `getKaryawan` gak butuh token. Semua endpoint lain butuh token valid (hasil `login`/`hrLogin`) — sudah dicek: token tidak valid ditolak dengan pesan `UNAUTHORIZED` yang identik di Apps Script maupun Vercel, jadi tidak ada endpoint yang diam-diam menerima request tanpa otentikasi.
+
+## Catatan `hapusKaryawan`
+
+- Yang dihapus HANYA 1 baris di sheet `KARYAWAN` (`deleteDimension`). `DATABASE`, `SKOR`, `GAJI` tidak disentuh — riwayat tetap ada, dan kalau nama yang sama ditambahkan lagi (dicocokkan pakai `normalNama`: trim + case-insensitive), riwayat lamanya nyambung lagi.
+- Validasi di server: token wajib `isHrToken` (sama dengan `resetPin`); tolak hapus akun yang sedang login (cek `nama` di token — token dari HR key tidak mewakili karyawan mana pun, jadi cek ini dilewati untuknya); tolak kalau target satu-satunya role `hr` (role `admin` tidak dihitung); sebelum hapus, sel nama di baris target dibaca ULANG dan harus masih cocok — kalau barisnya bergeser karena edit bersamaan, batal.
+- Sisa resiko: jeda milidetik antara baca ulang dan `deleteDimension` tidak dikunci (Sheets API tidak punya lock yang dipakai bareng `LockService` Apps Script). Dianggap dapat diterima — kemungkinannya sangat kecil dan kalaupun kejadian, yang bergeser cuma posisi baris.
+- Token karyawan non-HR yang dihapus tidak langsung mati sampai kedaluwarsa (login baru sudah ditolak Apps Script: "Nama tidak terdaftar"). Untuk role hr/admin aksesnya langsung hilang karena role dibaca ulang dari sheet.
+- Backend Vercel (`../Absensi-Vercel`) BUKAN repo git — perubahan backend hanya tercatat lewat deployment Vercel, bukan commit.
 
 Catatan: `kreatif.html` dan bagian dashboard Produksi di `produksi.html` (`APPS_SCRIPT_URL`/`APPS_SCRIPT_URL_DASHBOARD`) manggil project Apps Script **LAIN** (dashboard Kreatif), di luar scope dokumen ini — bukan bagian dari sistem Absensi/Code.js yang dibahas di sini.
 

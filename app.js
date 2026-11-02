@@ -2130,6 +2130,9 @@ function hrRenderKaryawanList() {
       <button class="hr-kr-reset-btn" ${k.terdaftar ? '' : 'disabled'} onclick="hrResetPinKaryawan('${namaSafe.replace(/'/g, "\\'")}')">
         Reset PIN
       </button>
+      <button class="hr-kr-reset-btn" data-nama="${namaSafe.replace(/"/g, '&quot;')}" onclick="hrHapusKaryawan(this.dataset.nama, this)">
+        Hapus
+      </button>
     </div>`;
   }).join('');
 }
@@ -2211,6 +2214,57 @@ async function hrResetPinKaryawan(nama) {
     hrRenderKaryawanList();
   } catch (e) {
     errBox.innerHTML = '<div class="status-box status-fail">⚠️ Gagal koneksi ke server.</div>';
+  }
+}
+
+// Hapus karyawan = cuma baris di sheet KARYAWAN. DATABASE/SKOR/GAJI gak
+// disentuh server, jadi riwayatnya tetap ada. Validasi beneran (token HR,
+// bukan diri sendiri, bukan hr terakhir, nama cocok) ada di server.
+async function hrHapusKaryawan(nama, btnEl) {
+  const konfirmasi = confirm(
+    'Hapus karyawan "' + nama + '"?\n\n' +
+    '• ' + nama + ' tidak akan bisa login lagi.\n' +
+    '• Riwayat absensi dan gaji-nya TETAP tersimpan (tidak ikut terhapus).\n' +
+    '• Kalau nanti nama yang sama ditambahkan lagi (huruf besar/kecil tidak berpengaruh), riwayat lamanya akan nyambung lagi.'
+  );
+  if (!konfirmasi) return;
+
+  const errBox = document.getElementById('hrKrErrorBox');
+  errBox.innerHTML = '';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Menghapus...'; }
+
+  try {
+    const res = await fetch(VERCEL_BACKEND_URL + '/hr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'hapusKaryawan', token: tokenHR(), nama })
+    });
+    const data = await res.json();
+
+    if (data.result !== 'success') {
+      if (data.code === 'UNAUTHORIZED' || data.message === 'Unauthorized') {
+        hrHandleUnauthorized(errBox);
+      } else {
+        errBox.innerHTML = '<div class="status-box status-fail">⚠️ ' + escapeHtml(data.message || 'Gagal menghapus karyawan.') + '</div>';
+      }
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Hapus'; }
+      return;
+    }
+
+    // Daftar nama (login & Mode HR), leaderboard, dan rekap HR semuanya
+    // turunan sheet KARYAWAN — buang cache-nya biar gak nampilin orang ini lagi.
+    daftarNamaCache = null;
+    leaderboardCache = null;
+    leaderboardCacheTime = 0;
+    hrRekapCache = [];
+    hrTodayCache = [];
+
+    await hrLoadKaryawanList();
+    document.getElementById('hrKrErrorBox').innerHTML =
+      '<div class="status-box status-ok">✅ ' + escapeHtml(data.message || 'Karyawan dihapus.') + '</div>';
+  } catch (e) {
+    errBox.innerHTML = '<div class="status-box status-fail">⚠️ Gagal koneksi ke server.</div>';
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Hapus'; }
   }
 }
 
